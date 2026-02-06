@@ -1,0 +1,139 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-06T12:08:45.452Z",
+  "summary": "The diff adds a substantial frontend shell (routing, auth gating, admin nav, masters/form/task UI components) and a new backend/main.mo with types for masters, forms, tasks, audit, SLA, and escalations. However, several BuildRequest acceptance criteria are not evidenced as implemented (notably dynamic lookup loading for dropdown/multi-select, complete master coverage incl. Roles/Users masters + deactivation, and clear form versioning/submission linkage details). The diff also introduces blob-storage and authorization mixins and some extra branding text not requested.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Master Data Management for fixed masters (Users, Roles, Departments, Statuses, Categories, Priorities) and user-defined master lists, including CRUD, lookup support, and deactivation behavior.",
+      "reason": "The backend types shown include Department/Category/Status/Priority/TaskType and MasterList, but do not show fixed masters for Users and Roles, nor any deactivation flags/logic. Frontend CRUD components shown do not evidence deactivation support either.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/components/masters/FixedMasterCrud.tsx",
+        "frontend/src/components/masters/MasterListEditor.tsx"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Dropdown and multi-select options must be loaded dynamically from backend master lookups at runtime (no static options in form definition), reflecting renames/deactivations automatically.",
+      "reason": "DynamicFormRenderer currently renders hard-coded placeholder options for dropdown and multi-select (\"Option 1\"/\"Option 2\") and includes a comment indicating options would be loaded from lookup, but no actual runtime lookup fetching is evidenced.",
+      "evidence": [
+        "frontend/src/components/forms/DynamicFormRenderer.tsx"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Dynamic Form Definition model with versioning (publish new version without overwriting prior versions) and ordered fields including validation metadata; dropdown/multi-select fields reference fixed masters or user-defined master lists via lookup.",
+      "reason": "The backend type shown for FormDefinition contains a single 'version' field but no evidence of multiple stored versions or publish mechanics that preserve prior versions. The frontend form renderer also does not show lookup-driven rendering for dropdown/multi-select options.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/components/forms/DynamicFormRenderer.tsx",
+        "frontend/src/components/forms/FieldDefinitionRow.tsx"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Store form submissions per form version with references to task instance, and provide read-only viewing of prior submissions with completion status per task/form.",
+      "reason": "Backend submission type shown (DynamicFormInput) includes formId/version/submittedBy/submittedAt but does not evidence a required reference to a task instance. Frontend has a read-only viewer component, but the task/form submission linkage and status derivation from submissions is not evidenced in the provided diff summary.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/components/forms/SubmissionValueViewer.tsx",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Task journey tracking with an append-only event log per task and a UI timeline on task detail showing human-readable entries.",
+      "reason": "Backend types for audit entries/actions exist, but no concrete persistence/append-only behavior is evidenced in the truncated backend, and no Task Journey timeline UI is shown in the diff summary (TaskDetailPage is referenced but not included).",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "requirement": "SLA/TAT configuration on task definitions, backend computation of SLA status, escalation event recording when thresholds are exceeded, and frontend display on lists/details.",
+      "reason": "SLA status badge UI exists, and backend types (EscalationRule/TaskSLAStatus) exist, but the diff summary does not show task-definition-level SLA configuration, backend computations, or logic to record escalation events in the task journey when thresholds are crossed.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/components/tasks/SlaStatusBadge.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Adds blob storage mixin usage in the backend (MixinStorage / blob-storage imports).",
+      "reason": "The BuildRequest did not request integrating a blob-storage mixin/library; it only required File Upload field support and constrained the backend to remain a single Motoko actor with no additional backend services.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "description": "Adds an authorization mixin/library (authorization/MixinAuthorization and authorization/access-control).",
+      "reason": "While RBAC is required, the BuildRequest did not specify adding an authorization mixin package; the diff introduces these specific modules, which may be beyond the requested scope/constraints (cannot confirm compatibility with constraints from the summary alone).",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "description": "Adds product branding/footer text and external link (\"Built with love using caffeine.ai\").",
+      "reason": "Not requested in REQ-10 (theme/layout) or any other requirement; introduces additional branding content.",
+      "evidence": [
+        "frontend/src/components/layout/AppShell.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.68,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/auth/AccessDeniedScreen.tsx",
+    "frontend/src/components/auth/LoginButton.tsx",
+    "frontend/src/components/auth/ProfileSetupDialog.tsx",
+    "frontend/src/components/auth/RequireAdmin.tsx",
+    "frontend/src/components/auth/RequireAuth.tsx",
+    "frontend/src/components/forms/DynamicFormRenderer.tsx",
+    "frontend/src/components/forms/FieldDefinitionRow.tsx",
+    "frontend/src/components/forms/FormDefinitionEditor.tsx",
+    "frontend/src/components/forms/SubmissionValueViewer.tsx",
+    "frontend/src/components/forms/fields/FileUploadField.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/layout/NavSection.tsx",
+    "frontend/src/components/masters/FixedMasterCrud.tsx",
+    "frontend/src/components/masters/MasterListEditor.tsx",
+    "frontend/src/components/tasks/PickupTaskButton.tsx",
+    "frontend/src/components/tasks/ReassignTaskDialog.tsx",
+    "frontend/src/components/tasks/SlaStatusBadge.tsx",
+    "frontend/src/components/tasks/TaskFormsPanel.tsx",
+    "frontend/src/components/tasks/TaskJourneyTimeline.tsx",
+    "frontend/src/components/tasks/TaskListTable.tsx",
+    "frontend/src/hooks/forms/useFormDefinitions.ts",
+    "frontend/src/hooks/forms/useFormSubmissions.ts",
+    "frontend/src/hooks/forms/useLookupOptions.ts",
+    "frontend/src/hooks/masters/useMasters.ts",
+    "frontend/src/hooks/tasks/useAssignmentActions.ts",
+    "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
+    "frontend/src/hooks/tasks/useTaskJourney.ts",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useCurrentUser.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/admin/FormBuilderPage.tsx",
+    "frontend/src/pages/admin/MastersPage.tsx",
+    "frontend/src/pages/admin/TaskDefinitionsPage.tsx",
+    "frontend/src/pages/tasks/CreateTaskPage.tsx",
+    "frontend/src/pages/tasks/DepartmentPoolPage.tsx",
+    "frontend/src/pages/tasks/FormSubmissionViewPage.tsx",
+    "frontend/src/pages/tasks/MyTasksPage.tsx",
+    "frontend/src/pages/tasks/TaskDetailPage.tsx",
+    "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}

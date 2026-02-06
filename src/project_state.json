@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Design and guide development of a low-code, configuration-driven Task & Form Management application (Zoho Creator-style) with master data management, dynamic form definitions, reusable/versioned forms, task assignments/reassignments, journey tracking, and escalation/TAT/SLA tracking.",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-implement-authentication-and-role-based-access-control-so-that-only-admin-users-can-create-edit-master-data-master-lists-and-form-definitions-non-admin-users-can-only-work-on-tasks-and-submit-assigned-forms-according-to-task-visibility-rules",
+      "title": "Implement authentication and role-based access control so that only Admin users can create/edit master data, master lists, and form definitions; non-admin users can only work on tasks and submit assigned forms according to task visibility rules.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-master-data-management-for-fixed-masters-users-roles-departments-statuses-categories-priorities-and-user-defined-master-lists-including-crud-operations-lookup-support-and-admin-only-edit-permissions",
+      "title": "Create Master Data Management for fixed masters (Users, Roles, Departments, Statuses, Categories, Priorities) and user-defined master lists, including CRUD operations, lookup support, and Admin-only edit permissions.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-dynamic-form-definition-model-with-versioning-and-field-definitions-so-admin-users-can-build-reusable-forms-including-validation-metadata-and-support-for-single-line-multi-line-number-date-date-time-dropdown-multi-select-and-file-upload-fields",
+      "title": "Implement a dynamic Form Definition model with versioning and field definitions so Admin users can build reusable forms, including validation metadata and support for: Single Line, Multi Line, Number, Date, Date-Time, Dropdown, Multi-Select, and File Upload fields.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enable-custom-form-fields-to-reference-master-data-via-lookups-with-dropdown-and-multi-select-options-loaded-dynamically-from-masters-at-runtime-and-ensure-master-changes-automatically-reflect-in-all-dependent-form-renders",
+      "title": "Enable custom form fields to reference master data via lookups, with dropdown and multi-select options loaded dynamically from masters at runtime, and ensure master changes automatically reflect in all dependent form renders.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-store-custom-forms-as-reusable-entities-that-can-be-linked-to-multiple-task-definitions-and-implement-submission-tracking-per-form-version-including-a-read-only-view-of-prior-submissions",
+      "title": "Store custom forms as reusable entities that can be linked to multiple task definitions, and implement submission tracking per form version including a read-only view of prior submissions.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-task-definitions-and-task-instances-that-support-attaching-multiple-custom-forms-and-tracking-per-form-completion-status-including-task-metadata-task-type-priority-status-owner-created-date-due-date-and-completion-date",
+      "title": "Implement Task Definitions and Task Instances that support attaching multiple custom forms and tracking per-form completion status, including task metadata: Task Type, Priority, Status, Owner, Created Date, Due Date, and Completion Date.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-assignment-and-reassignment-workflows-tasks-can-be-assigned-to-a-department-pool-or-a-specific-user-department-assigned-tasks-can-be-picked-up-by-a-department-member-tasks-can-be-reassigned-to-another-department-user-while-enforcing-visibility-rules",
+      "title": "Implement assignment and reassignment workflows: tasks can be assigned to a department pool or a specific user; department-assigned tasks can be picked up by a department member; tasks can be reassigned to another department/user while enforcing visibility rules.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-task-journey-tracking-audit-history-showing-the-lifecycle-of-a-task-across-status-changes-assignments-pickups-reassignments-and-form-submissions-viewable-in-the-ui",
+      "title": "Provide task journey tracking (audit history) showing the lifecycle of a task across status changes, assignments, pickups, reassignments, and form submissions, viewable in the UI.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-escalation-rules-and-tat-sla-tracking-for-tasks-including-calculating-elapsed-time-vs-due-time-a-task-sla-status-on-track-at-risk-breached-and-recording-escalation-events-when-thresholds-are-exceeded",
+      "title": "Implement escalation rules and TAT/SLA tracking for tasks, including calculating elapsed time vs due time, a task SLA status (On track / At risk / Breached), and recording escalation events when thresholds are exceeded.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-coherent-consistent-ui-theme-for-an-enterprise-admin-workflow-tool-colors-typography-spacing-and-component-styling-and-apply-it-across-admin-masters-forms-task-definitions-and-user-tasks-forms-journey-areas-using-tailwind-existing-ui-components",
+      "title": "Create a coherent, consistent UI theme for an enterprise admin/workflow tool (colors, typography, spacing, and component styling) and apply it across Admin (masters/forms/task definitions) and User (tasks/forms/journey) areas using Tailwind + existing UI components.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Master Data Management: Admin-managed master forms for users/roles/departments/statuses/categories/priorities and user-defined master lists, referencable via lookups across transactional forms.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Dynamic Form Builder: Form Definition model with versioning; Admin can define forms and field definitions (type, label, required, validations) supporting common field types (text, number, date/datetime, dropdown/multi-select, file upload).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Master Data in Custom Forms: Allow custom form fields to reference master forms via lookups; dropdowns/multi-selects load master values dynamically and reflect master updates automatically.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Reusable Custom Forms: Store custom forms as reusable entities that can be linked to multiple tasks; maintain version history and submission tracking.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Task Management with Multiple Forms: Task definitions support attaching multiple custom forms (subforms/related forms), track per-form completion, and include task metadata (type, priority, status, owner, created/due/completion dates).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Assignment/Reassignment Workflow: Create tasks from task definitions; assign to department/user with department task pool pickup; enable reassignment to another department/user with appropriate visibility controls.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Task Journey Tracking: Provide view of task journey/history across assignments and status changes.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Escalation & TAT/SLA: Implement task escalation rules with TAT/SLA tracking.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Low-code Task & Form Management (masters, dynamic forms, tasks, assignments, journey, SLA)",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}
