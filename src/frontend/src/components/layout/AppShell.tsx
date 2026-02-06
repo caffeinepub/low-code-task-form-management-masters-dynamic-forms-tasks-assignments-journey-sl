@@ -2,9 +2,10 @@ import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { useIsCallerAdmin } from '../../hooks/useCurrentUser';
 import LoginButton from '../auth/LoginButton';
 import NavSection from './NavSection';
-import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { LayoutDashboard, ListTodo, Users, FileText, Settings, Briefcase } from 'lucide-react';
+import { NAV_MATCH_RULES } from '../../utils/navMatch';
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -13,23 +14,53 @@ type AppShellProps = {
 export default function AppShell({ children }: AppShellProps) {
   const navigate = useNavigate();
   const routerState = useRouterState();
-  const { data: isAdmin } = useIsCallerAdmin();
+  const { data: isAdmin, isLoading: isAdminLoading } = useIsCallerAdmin();
   const currentPath = routerState.location.pathname;
 
   const userNavItems = [
-    { label: 'My Tasks', path: '/tasks', icon: ListTodo },
-    { label: 'Department Pool', path: '/department-pool', icon: Users },
-    { label: 'Create Task', path: '/tasks/create', icon: Briefcase },
+    { 
+      label: 'My Tasks', 
+      path: '/tasks', 
+      icon: ListTodo,
+      matchRule: NAV_MATCH_RULES.myTasks,
+    },
+    { 
+      label: 'Department Pool', 
+      path: '/department-pool', 
+      icon: Users,
+      matchRule: NAV_MATCH_RULES.departmentPool,
+    },
+    { 
+      label: 'Create Task', 
+      path: '/tasks/create', 
+      icon: Briefcase,
+      matchRule: NAV_MATCH_RULES.createTask,
+    },
   ];
 
   const adminNavItems = [
-    { label: 'Master Data', path: '/admin/masters', icon: LayoutDashboard },
-    { label: 'Form Builder', path: '/admin/forms', icon: FileText },
-    { label: 'Task Definitions', path: '/admin/task-definitions', icon: Settings },
+    { 
+      label: 'Master Data', 
+      path: '/admin/masters', 
+      icon: LayoutDashboard,
+      matchRule: NAV_MATCH_RULES.adminMasters,
+    },
+    { 
+      label: 'Form Builder', 
+      path: '/admin/forms', 
+      icon: FileText,
+      matchRule: NAV_MATCH_RULES.adminForms,
+    },
+    { 
+      label: 'Task Definitions', 
+      path: '/admin/task-definitions', 
+      icon: Settings,
+      matchRule: NAV_MATCH_RULES.adminTaskDefinitions,
+    },
   ];
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <Sidebar>
         <SidebarHeader className="border-b border-sidebar-border p-4">
           <div className="flex items-center gap-2">
@@ -44,7 +75,7 @@ export default function AppShell({ children }: AppShellProps) {
         </SidebarHeader>
         <SidebarContent>
           <NavSection title="Tasks" items={userNavItems} currentPath={currentPath} onNavigate={navigate} />
-          {isAdmin && (
+          {!isAdminLoading && isAdmin && (
             <>
               <Separator className="my-2" />
               <NavSection title="Administration" items={adminNavItems} currentPath={currentPath} onNavigate={navigate} />

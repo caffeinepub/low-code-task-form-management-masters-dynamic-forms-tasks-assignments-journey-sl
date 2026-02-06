@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { Principal } from '@dfinity/principal';
 import RequireAdmin from '../../components/auth/RequireAdmin';
 import FormDefinitionEditor from '../../components/forms/FormDefinitionEditor';
 import { Button } from '@/components/ui/button';
@@ -7,51 +8,109 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { useGetFormDefinitions, useCreateFormDefinition, useDeleteFormDefinition } from '../../hooks/forms/useFormDefinitions';
+import { 
+  useGetFormDefinitions, 
+  useCreateFormDefinition, 
+  useUpdateFormDefinition,
+  useDeleteFormDefinition 
+} from '../../hooks/forms/useFormDefinitions';
+import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { toast } from 'sonner';
-import type { FormField } from '../../backend';
+import { getErrorMessage } from '../../utils/getErrorMessage';
+import { normalizeFormDefinition } from '../../utils/formDefinitionEncoding';
+import type { FormField, FormDefinition } from '../../backend';
 
 export default function FormBuilderPage() {
   const navigate = useNavigate();
+  const { identity } = useInternetIdentity();
   const { data: formDefinitions = [], isLoading } = useGetFormDefinitions();
   const createFormDefinition = useCreateFormDefinition();
+  const updateFormDefinition = useUpdateFormDefinition();
   const deleteFormDefinition = useDeleteFormDefinition();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
   const [fields, setFields] = useState<FormField[]>([]);
 
   const handleCreateNew = () => {
     setFormName('');
     setFields([]);
+    setEditingId(null);
+    setIsEditing(true);
+  };
+
+  const handleEdit = (form: FormDefinition) => {
+    setFormName(form.name);
+    setFields(form.fields);
+    setEditingId(form.id);
     setIsEditing(true);
   };
 
   const handleSave = async () => {
+    // Validate form name
     if (!formName.trim()) {
       toast.error('Form name is required');
       return;
     }
 
+    // Validate at least one field
+    if (fields.length === 0) {
+      toast.error('At least one field is required');
+      return;
+    }
+
     try {
       const now = BigInt(Date.now() * 1000000);
-      await createFormDefinition.mutateAsync({
-        id: crypto.randomUUID(),
+      
+      // Use authenticated principal if available, otherwise anonymous principal
+      const creatorPrincipal = identity 
+        ? identity.getPrincipal() 
+        : Principal.anonymous();
+      
+      const formDefinition: FormDefinition = {
+        id: editingId || crypto.randomUUID(),
         name: formName.trim(),
         version: BigInt(1),
         fields,
         created: now,
         lastUpdated: now,
-        creator: '' as any, // Will be set by backend
-      });
-      toast.success('Form definition created successfully');
+        creator: creatorPrincipal,
+      };
+
+      // Normalize the form definition to match backend types
+      const normalizedForm = normalizeFormDefinition(formDefinition);
+
+      if (editingId) {
+        // Update existing form
+        await updateFormDefinition.mutateAsync({
+          id: editingId,
+          formDefinition: normalizedForm,
+        });
+        toast.success('Form definition updated successfully');
+      } else {
+        // Create new form
+        await createFormDefinition.mutateAsync(normalizedForm);
+        toast.success('Form definition created successfully');
+      }
+      
       setIsEditing(false);
+      setEditingId(null);
       setFormName('');
       setFields([]);
     } catch (error) {
-      toast.error('Failed to create form definition');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      toast.error(`Failed to save form definition: ${errorMessage}`);
+      console.error('Form save error:', error);
+      // Keep the editor open with current state on error
     }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditingId(null);
+    setFormName('');
+    setFields([]);
   };
 
   const handleDelete = async (id: string) => {
@@ -61,10 +120,13 @@ export default function FormBuilderPage() {
       await deleteFormDefinition.mutateAsync(id);
       toast.success('Form definition deleted successfully');
     } catch (error) {
-      toast.error('Failed to delete form definition');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      toast.error(`Failed to delete form definition: ${errorMessage}`);
+      console.error('Form deletion error:', error);
     }
   };
+
+  const isSaving = createFormDefinition.isPending || updateFormDefinition.isPending;
 
   return (
     <RequireAdmin>
@@ -91,10 +153,10 @@ export default function FormBuilderPage() {
               onFieldsChange={setFields}
             />
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={createFormDefinition.isPending}>
-                {createFormDefinition.isPending ? 'Saving...' : 'Save Form'}
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Saving...' : editingId ? 'Update Form' : 'Save Form'}
               </Button>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
+              <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
                 Cancel
               </Button>
             </div>
@@ -132,10 +194,20 @@ export default function FormBuilderPage() {
                         <TableCell>{form.fields.length} fields</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleEdit(form)}
+                              disabled={deleteFormDefinition.isPending}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(form.id)}>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleDelete(form.id)}
+                              disabled={deleteFormDefinition.isPending}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

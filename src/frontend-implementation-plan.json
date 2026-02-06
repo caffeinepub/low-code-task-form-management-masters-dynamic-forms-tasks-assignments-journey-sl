@@ -1,364 +1,127 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Low-code Task & Form Management — Frontend (Auth, Admin Config, Tasks, Journey, SLA)",
+  "title": "Task Definitions with multi-form attachments and task-scoped form submissions (frontend wiring + UI)",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Add Internet Identity authentication, role-aware navigation, and admin route guarding with clear access-denied messaging and profile setup.",
+      "id": "REQ-23",
+      "summary": "Replace placeholder React Query hooks for task definitions, tasks, and task form submissions with real backend actor calls and proper cache invalidation.",
       "acceptanceCriteria": [
-        "Users authenticate via Internet Identity and a logged-in principal is available to the app",
-        "There is a backend-enforced Admin role check for all admin-only mutations (not just frontend hiding)",
-        "Non-admin users cannot call admin-only backend methods successfully",
-        "UI shows admin navigation/pages only to Admin users and shows a clear English message like \"You do not have access\" when blocked"
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts no longer returns empty arrays/null for task definition and task queries when an actor is available.",
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts mutations (create task definition, update task definition, create task) call corresponding backend actor methods and invalidate appropriate query keys.",
+        "frontend/src/hooks/forms/useFormSubmissions.ts query hooks (getTaskSubmissions, getSubmission) and mutation (useSubmitForm) call corresponding backend actor methods and invalidate caches as expected.",
+        "Any user-facing error messages shown as a result of failed calls are in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
-          "operation": "create",
-          "description": "Create the app root with authenticated gating (require login before showing app data), role-aware routing for Admin vs User areas, and route-level Admin guard that renders an English access-denied screen when blocked. Use the selected authorization component patterns (Internet Identity + role checks). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useCurrentUser.ts",
-          "operation": "create",
-          "description": "Add a React Query-based hook that loads current user role (getCallerUserRole/isCallerAdmin) and profile (getCallerUserProfile) after actor availability, avoiding profile-setup modal flash per the selected authorization component guidance. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/auth/LoginButton.tsx",
-          "operation": "create",
-          "description": "Create a login/logout button using Internet Identity; on logout, clear cached app data (React Query client clear) per selected authorization component guidance. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/auth/ProfileSetupDialog.tsx",
-          "operation": "create",
-          "description": "Create first-login profile setup UI to collect a human-readable name (and optional email/department if desired), calling saveCallerUserProfile; ensure all user-facing text is English. Use the selected authorization component profile setup guidance. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/auth/AccessDeniedScreen.tsx",
-          "operation": "create",
-          "description": "Create an AccessDenied screen that clearly states \"You do not have access\" in English and provides a navigation back option; recommended by selected authorization component UI guidance. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/auth/RequireAuth.tsx",
-          "operation": "create",
-          "description": "Add a wrapper component that blocks app data rendering until authenticated (non-anonymous identity), showing a login call-to-action instead. Use the selected authorization component authentication guidance. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/auth/RequireAdmin.tsx",
-          "operation": "create",
-          "description": "Add an Admin-only wrapper component that checks role and either renders children or the AccessDeniedScreen; also use it to hide admin navigation entries. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Provide Admin-only Master Data Management screens for fixed masters and user-defined master lists with CRUD UI and lookup support.",
-      "acceptanceCriteria": [
-        "Backend provides CRUD for each fixed master type and for generic user-defined master lists (list + items)",
-        "Admin can create/edit/deactivate master items; non-admin cannot",
-        "Frontend provides Admin screens to manage all masters and user-defined master lists",
-        "Lookups return current (non-deactivated) master items and can be queried by master list/type",
-        "Changing master items is reflected immediately in lookup options used by custom forms (no data duplication of option lists)"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/admin/MastersPage.tsx",
-          "operation": "create",
-          "description": "Create an Admin Masters screen that allows managing fixed masters (Departments, Statuses, Categories, Priorities, Task Types, Roles/Users where supported) and user-defined Master Lists (create/update/delete lists + manage items) by calling backend master CRUD functions via the actor. Compose existing shadcn/ui components for tables, dialogs, inputs, and buttons (do not edit immutable UI component files). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/masters/useMasters.ts",
-          "operation": "create",
-          "description": "Add React Query hooks for listing and mutating master data (fixed masters + master lists) with cache invalidation so lookup options refresh immediately across the app. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/masters/MasterListEditor.tsx",
-          "operation": "create",
-          "description": "Create a reusable editor for a user-defined master list (list metadata + item add/edit/deactivate/delete) using composed shadcn/ui dialogs/forms. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/masters/FixedMasterCrud.tsx",
-          "operation": "create",
-          "description": "Create a reusable CRUD panel for fixed master types (Category/Priority/Status/Department/TaskType) driven by props, using composed shadcn/ui components. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/backend.d.ts",
           "operation": "modify",
-          "description": "Wire the Admin Masters page into routing and Admin navigation (visible only to Admin users) and ensure non-admin access shows the AccessDenied screen in English. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Build an Admin Form Builder UI for dynamic form definitions with versioning, field types, and validation metadata including file upload fields.",
-      "acceptanceCriteria": [
-        "Backend supports creating a Form Definition and publishing a new version without overwriting prior versions",
-        "Each form version contains an ordered list of field definitions including: label, field type, required flag, and validation metadata",
-        "Dropdown and Multi-Select field definitions can be configured to reference either a fixed master type or a user-defined master list via lookup",
-        "Frontend provides an Admin \"Form Builder\" UI to create/edit/publish form definitions and versions",
-        "Field types listed in the requirement are renderable in the end-user form renderer"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/admin/FormBuilderPage.tsx",
-          "operation": "create",
-          "description": "Create an Admin Form Builder page to create/edit form definitions, manage ordered fields, set validation metadata, and trigger version publishing behavior as supported by backend. Use composed shadcn/ui components for editor layout, dialogs, and controls (do not edit immutable UI files). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/forms/FormDefinitionEditor.tsx",
-          "operation": "create",
-          "description": "Implement the core form-definition editor: add/remove/reorder fields, configure label/type/required/validation rules, and configure lookup references for dropdown/multi-select fields to fixed masters or user-defined master lists. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/forms/FieldDefinitionRow.tsx",
-          "operation": "create",
-          "description": "Create a per-field editor row that conditionally renders configuration controls by field type (single line, multi line, number, date, date-time, dropdown, multi-select, file upload), including validation metadata inputs. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/forms/useFormDefinitions.ts",
-          "operation": "create",
-          "description": "Add React Query hooks for reading/updating form definitions and refreshing caches after edits/publish actions, coordinating with Admin-only routing/guards. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire the Admin Form Builder page into routing and Admin navigation, protected by Admin guard and showing an English access-denied message when blocked. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Render dynamic forms with lookup-backed dropdown/multi-select options fetched at runtime so master changes reflect immediately without republishing forms.",
-      "acceptanceCriteria": [
-        "When rendering a form with lookup fields, the frontend fetches options from backend master endpoints (not stored in the form definition as static options)",
-        "If a master item is renamed, new renders show the updated name without needing to republish the form version",
-        "If a master item is deactivated, it no longer appears in new selections; previously submitted values remain viewable"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/forms/DynamicFormRenderer.tsx",
-          "operation": "create",
-          "description": "Create a dynamic form renderer that takes a FormDefinition (and optional existing submission data) and renders inputs for all supported field types. For dropdown/multi-select lookup fields, load options at runtime from masters/master lists (not from static embedded options) so changes reflect immediately. Use composed shadcn/ui inputs/selects. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/forms/useLookupOptions.ts",
-          "operation": "create",
-          "description": "Implement lookup-option hooks that fetch current master options on demand for a given fixed master type or user-defined master list id, with caching/invalidation so updates in Masters immediately reflect in renders. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/forms/fields/FileUploadField.tsx",
-          "operation": "create",
-          "description": "Implement the file upload field UI using the selected blob-storage component (ExternalBlob) to create blobs from bytes and show upload progress; store only references in submission payloads as supported by backend. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/forms/SubmissionValueViewer.tsx",
-          "operation": "create",
-          "description": "Create a read-only value viewer that can display previously submitted values (including lookup labels and file links via direct URL when available) even if a master item is now deactivated. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Show task-attached reusable forms with per-version submission tracking and a read-only view of prior submissions.",
-      "acceptanceCriteria": [
-        "A task definition can reference one or more reusable form definitions (with a specific version or a \"latest published\" strategy)",
-        "Backend stores each submission with references to: task instance, form definition id, form version, submitter, and timestamps",
-        "Frontend shows per-task a list of attached forms with completion/submission status and allows viewing submitted data read-only"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/tasks/TaskDetailPage.tsx",
-          "operation": "create",
-          "description": "Create a Task Detail page that shows task metadata plus a section listing attached forms, per-form completion status derived from submissions, and actions to open a form for completion or view prior submissions read-only. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/tasks/TaskFormsPanel.tsx",
-          "operation": "create",
-          "description": "Implement the per-task forms panel: list attached forms, display status (Not started/In progress/Submitted), open the DynamicFormRenderer for data entry, and provide navigation to read-only submission views. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/tasks/FormSubmissionViewPage.tsx",
-          "operation": "create",
-          "description": "Create a page for read-only viewing of a specific form submission (including form version info, submitter, timestamps) using SubmissionValueViewer. Wire it via routing. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/forms/useFormSubmissions.ts",
-          "operation": "create",
-          "description": "Add React Query hooks to fetch a task's submissions and derive per-form completion status; ensure caches invalidate after successful submit so UI updates immediately. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire Task Detail and Submission View pages into routing and navigation flows from task lists. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Provide UI for task definitions (Admin) and task instances (Users) with required metadata and per-form status display.",
-      "acceptanceCriteria": [
-        "Admin can create and edit Task Definitions and attach multiple form definitions to each task definition",
-        "Users can create Task Instances from a selected Task Definition",
-        "Each task instance shows a per-form status (e.g., Not started / In progress / Submitted) derived from submissions",
-        "Task instance stores and displays the required metadata fields and updates Completion Date when marked completed"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/admin/TaskDefinitionsPage.tsx",
-          "operation": "create",
-          "description": "Create an Admin Task Definitions page to create/edit task definitions, set task metadata defaults, configure attached reusable forms (select form definition + version strategy), and configure SLA parameters (as supported). Compose shadcn/ui components; do not edit immutable UI files. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/tasks/CreateTaskPage.tsx",
-          "operation": "create",
-          "description": "Create a User flow to create a task instance from a chosen task definition, capturing required metadata (task type, priority, status, owner, created/due dates) per backend support and ensuring English UI text. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/tasks/MyTasksPage.tsx",
-          "operation": "create",
-          "description": "Create a My Tasks list view showing task metadata columns and per-form completion status summary derived from submissions; provide navigation into Task Detail. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/tasks/TaskListTable.tsx",
-          "operation": "create",
-          "description": "Implement a reusable task list table (used by My Tasks and Department Pool) that displays task metadata and quick status indicators; compose shadcn/ui table components without modifying them. Verify the component's usage instructions before implementing."
+          "description": "Align frontend actor typings with the backend capabilities needed by the new hooks and UIs: add TaskDefinition types and actor methods for listing/fetching/creating/updating task definitions, creating a task from a definition, and task-scoped submission queries (list by task) and submission-by-id fetching; ensure submit flow returns/accepts the identifiers needed by /tasks/$taskId/submissions/$submissionId."
         },
         {
           "path": "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
-          "operation": "create",
-          "description": "Add hooks for loading task definitions and task instances and for performing create/edit/complete actions, with cache invalidation to keep lists and details consistent. Verify the component's usage instructions before implementing."
+          "operation": "modify",
+          "description": "Wire task definition and task queries/mutations to real actor methods (no placeholders): implement list/fetch task definitions, getTask, getMyTasks, getDepartmentPoolTasks using available actor calls; implement create/update Task Definition and create task-from-definition mutations; add query key strategy and invalidate keys affecting lists and details; ensure thrown errors are surfaced as English messages when caught by pages."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/hooks/forms/useFormSubmissions.ts",
           "operation": "modify",
-          "description": "Wire Admin Task Definitions and User task pages into routing and navigation, ensuring Admin-only routes are protected. Verify the component's usage instructions before implementing."
+          "description": "Replace placeholders with actor calls for task-scoped submissions: implement getTaskSubmissions(taskId), getSubmission(submissionId), and submit-for-task mutation; after successful submit, invalidate the task detail query key (e.g., ['task', taskId]) and submissions query key (['taskSubmissions', taskId]) so per-form completion state and submission links refresh; use English error messages via the existing error handling patterns."
+        },
+        {
+          "path": "frontend/src/utils/getErrorMessage.ts",
+          "operation": "modify",
+          "description": "If needed, extend error normalization to reliably produce English user-facing messages for common actor failures (including trap strings), without changing the default fallback message."
         }
       ]
     },
     {
-      "id": "REQ-7",
-      "summary": "Implement UI for assignment workflows including department pool, pickup, and reassignment actions with visibility-aware task browsing.",
+      "id": "REQ-24",
+      "summary": "Implement a working Admin Task Definitions UI with listing, create/edit dialogs, multi-select of Form Definitions, and client-side validation requiring at least one selected form.",
       "acceptanceCriteria": [
-        "Backend supports assigning a task to (a) a department pool or (b) a specific user",
-        "Backend supports \"pickup\" action for department members that assigns the task to the picking user and records the event",
-        "Backend supports reassignment to a different department or user with permission checks (only current assignee/owner/admin per defined rules)",
-        "Frontend provides: a department pool view, a \"My Tasks\" view, and actions for pickup and reassignment where allowed",
-        "Visibility: a user can only see tasks assigned to them or assigned to their department pool (and admin can see all)"
+        "The Admin route /admin/task-definitions (frontend/src/pages/admin/TaskDefinitionsPage.tsx) displays existing task definitions from the backend.",
+        "Admins can create a new Task Definition and select multiple existing Form Definitions to attach.",
+        "The UI prevents saving a Task Definition if no forms are selected and shows a clear English validation message.",
+        "Admins can edit an existing Task Definition and change its attached forms; after saving, the list reflects the update without a full page reload."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/pages/tasks/DepartmentPoolPage.tsx",
-          "operation": "create",
-          "description": "Create a Department Pool tasks view that lists tasks assigned to the current user's department pool and provides a pickup action where allowed. Ensure all user-facing text is English. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/tasks/PickupTaskButton.tsx",
-          "operation": "create",
-          "description": "Implement a pickup action component that calls the backend capability to pick up a department-assigned task, then invalidates relevant task/journey queries and updates UI state. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/tasks/ReassignTaskDialog.tsx",
-          "operation": "create",
-          "description": "Create a reassignment dialog that allows choosing a target user or department (sourced from master data lookups) and triggers reassignment if allowed; hide/disable actions when not permitted and show clear English error messages on authorization failures. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/tasks/useAssignmentActions.ts",
-          "operation": "create",
-          "description": "Add hooks for pickup and reassignment mutations, including optimistic UI where safe and consistent cache invalidation. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire Department Pool view into navigation (available to authenticated users) and ensure visibility rules are reflected in accessible navigation and empty-state messaging. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "summary": "Display a human-readable task journey (audit history) timeline in the task detail UI.",
-      "acceptanceCriteria": [
-        "Backend stores an append-only event log per task containing: event type, timestamp, actor, and relevant details (from/to assignee/department, status changes, submitted form id/version)",
-        "Frontend shows a chronological \"Task Journey\" timeline on the task detail page",
-        "Journey entries are human-readable in English"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/tasks/TaskJourneyTimeline.tsx",
-          "operation": "create",
-          "description": "Create a chronological timeline component that renders task journey events in human-readable English (assignment/pickup/reassignment/status changes/form submissions/escalations), with consistent formatting for timestamps and actors. Compose shadcn/ui primitives where helpful. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/tasks/useTaskJourney.ts",
-          "operation": "create",
-          "description": "Add a hook to load task journey events for a task and keep them in sync after actions (pickup/reassign/status change/submit) by invalidating queries. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/tasks/TaskDetailPage.tsx",
-          "operation": "modify",
-          "description": "Add the Task Journey section to the Task Detail page and ensure it updates after task actions and form submissions. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "summary": "Show SLA/TAT status (On track / At risk / Breached) on task lists and task detail, and reflect escalation events in journey UI.",
-      "acceptanceCriteria": [
-        "Task definitions allow configuring SLA/TAT parameters (at minimum: target duration and escalation threshold(s))",
-        "Backend computes SLA status for task instances based on Created Date / Due Date / configured thresholds",
-        "When a task crosses an escalation threshold, an escalation event is recorded in the task journey",
-        "Frontend displays SLA status clearly on task lists and task detail pages"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/tasks/SlaStatusBadge.tsx",
-          "operation": "create",
-          "description": "Create a clear SLA status badge component (On track / At risk / Breached) with consistent colors and accessible text labels, used across lists and details. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/tasks/TaskListTable.tsx",
-          "operation": "modify",
-          "description": "Add an SLA status column/indicator to task list rows (My Tasks and Department Pool), using SlaStatusBadge and any SLA fields returned by backend capabilities. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/tasks/TaskDetailPage.tsx",
-          "operation": "modify",
-          "description": "Display SLA status prominently on the Task Detail page near key dates (created/due/completion), and ensure escalation-related journey entries are visible in the timeline. Verify the component's usage instructions before implementing."
-        },
         {
           "path": "frontend/src/pages/admin/TaskDefinitionsPage.tsx",
           "operation": "modify",
-          "description": "Add UI controls for configuring task definition SLA/TAT parameters and escalation rules (target duration + threshold minutes/actions) per backend support, using composed shadcn/ui form components. Verify the component's usage instructions before implementing."
+          "description": "Replace placeholder content with a functional management UI: load task definitions via useGetTaskDefinitions and show them in a list/table; provide Create and Edit actions that open an editor dialog; refresh the list via React Query invalidation on successful mutations; display any failure as an English message (using getErrorMessage)."
+        },
+        {
+          "path": "frontend/src/components/tasks/TaskDefinitionEditorDialog.tsx",
+          "operation": "create",
+          "description": "Create a composed (non-shadcn-modifying) dialog component for creating/editing a Task Definition: includes name/description inputs and an ordered multi-select of existing Form Definitions (loaded via useGetFormDefinitions); enforce the 'at least one form' rule with an English validation message; on save, call useCreateTaskDefinition or useUpdateTaskDefinition as appropriate."
+        },
+        {
+          "path": "frontend/src/components/tasks/AttachedFormsMultiSelect.tsx",
+          "operation": "create",
+          "description": "Create a reusable multi-select UI for choosing one or more Form Definitions (checkbox list + optional search/filter and ordering controls) to attach to a Task Definition; keep the selected forms ordered; expose selected form ids (and optionally versions) to the editor dialog."
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Ensure the admin navigation clearly links to Task Definitions (if not already present/visible) and remains guarded by the existing admin gating logic; do not introduce new routes beyond those already defined."
         }
       ]
     },
     {
-      "id": "REQ-10",
-      "summary": "Apply a consistent enterprise admin/workflow UI theme and layout across Admin and User areas using Tailwind and composed UI components.",
+      "id": "REQ-25",
+      "summary": "Implement the Create Task UI to create a Task from a selected Task Definition and required metadata, then navigate to the new Task detail view.",
       "acceptanceCriteria": [
-        "App has a consistent layout with clear navigation separating Admin configuration from Task work",
-        "Typography, spacing, and interactive states (hover/active/disabled) are consistent across pages",
-        "User-facing text is in English"
+        "The route /tasks/create (frontend/src/pages/tasks/CreateTaskPage.tsx) loads available Task Definitions and allows selecting one.",
+        "Submitting the Create Task form calls the create task mutation and, on success, navigates to /tasks/$taskId for the newly created task.",
+        "If backend rejects creation (e.g., invalid definition id), the UI shows an English error message and remains on the form page."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/index.css",
-          "operation": "create",
-          "description": "Create global Tailwind entry styles and CSS variables for a cohesive enterprise theme (colors, typography, spacing rhythm), ensuring consistent interactive states across the app and English-only UI text conventions."
-        },
-        {
-          "path": "frontend/src/components/layout/AppShell.tsx",
-          "operation": "create",
-          "description": "Create a consistent app shell with top bar (login/profile) and a left navigation that separates Admin configuration from Task work; compose existing shadcn/ui components without editing immutable UI files. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/layout/NavSection.tsx",
-          "operation": "create",
-          "description": "Add a navigation section component supporting role-aware link visibility (Admin links hidden for non-admin) and consistent styling states. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/pages/tasks/CreateTaskPage.tsx",
           "operation": "modify",
-          "description": "Wrap routed pages with AppShell, ensure navigation structure is consistent across Admin and User pages, and keep all user-facing strings in English. Verify the component's usage instructions before implementing."
+          "description": "Replace placeholder content with a working Create Task form: load task definitions via useGetTaskDefinitions; allow selecting a definition and entering required metadata (aligned to backend capability); call the create-task-from-definition mutation; on success navigate to /tasks/$taskId; on failure, show an English error message using getErrorMessage and keep the user on the page."
+        },
+        {
+          "path": "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
+          "operation": "modify",
+          "description": "Update the create task mutation API shape to accept a Task Definition id plus task metadata (instead of constructing a full Task client-side), call the corresponding backend actor method, and return the created task id for navigation; invalidate task lists and task detail caches after success."
+        }
+      ]
+    },
+    {
+      "id": "REQ-26",
+      "summary": "Enable Task Detail form actions: open attached forms inside a task, submit per-form submissions, reflect completion state, and navigate to view saved submissions.",
+      "acceptanceCriteria": [
+        "On /tasks/$taskId, clicking “Fill Form” opens a form UI for the selected attached form (using existing DynamicFormRenderer) and allows submitting it for that task.",
+        "After submission, the task detail view reflects the updated per-form completion state (e.g., badge switches to Submitted).",
+        "Clicking “View Submission” navigates to /tasks/$taskId/submissions/$submissionId and displays the saved submission using the existing FormSubmissionViewPage.",
+        "All user-facing labels, buttons, and error messages in this flow are in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/tasks/TaskDetailPage.tsx",
+          "operation": "modify",
+          "description": "Replace console-based handlers with real actions: load the task via useGetTask; load task submissions via useGetTaskSubmissions; map each attached form to its display name (from FormDefinition when available) and latest submissionId; wire TaskFormsPanel callbacks to open a submit dialog and to navigate to the submission view route; after successful submission, refetch/invalidate task and submissions queries so completion badges update."
+        },
+        {
+          "path": "frontend/src/components/tasks/TaskFormsPanel.tsx",
+          "operation": "modify",
+          "description": "Extend the panel to support both actions correctly: accept per-form submissionId (when completed) so 'View Submission' can navigate to a specific submission; keep English labels ('Fill Form', 'View Submission', 'Submitted', 'Not Started') and ensure the UI reflects completion accurately."
+        },
+        {
+          "path": "frontend/src/components/tasks/TaskFormSubmitDialog.tsx",
+          "operation": "create",
+          "description": "Create a dialog that loads the selected FormDefinition and renders it using the existing DynamicFormRenderer; on submit, call useSubmitForm with taskId + selected form identifiers; show English validation/errors on submission failure using getErrorMessage; close dialog on success."
+        },
+        {
+          "path": "frontend/src/hooks/forms/useFormSubmissions.ts",
+          "operation": "modify",
+          "description": "Ensure the submit mutation returns (or makes available) the created submission id needed for the 'View Submission' navigation, and invalidates ['task', taskId] plus ['taskSubmissions', taskId] so the Task Detail completion state and available submission links update immediately."
+        },
+        {
+          "path": "frontend/src/pages/tasks/FormSubmissionViewPage.tsx",
+          "operation": "modify",
+          "description": "Keep the existing view but ensure it works with the real submission hook implementation; if needed, adjust to the updated submission type shape and make sure missing submission/form cases present English messages."
         }
       ]
     }

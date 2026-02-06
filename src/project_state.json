@@ -1,10 +1,17 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
+  "projectStateVersion": 17,
   "summary": "Design and guide development of a low-code, configuration-driven Task & Form Management application (Zoho Creator-style) with master data management, dynamic form definitions, reusable/versioned forms, task assignments/reassignments, journey tracking, and escalation/TAT/SLA tracking.",
-  "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "architectural_notes": [
+    "Clarified task creation approach: Admin configures Task Definitions by selecting 1..N existing Form Definitions; tasks are created normally from the definition (not auto-created from form submission). Each attached form must support independent save/submission status within a task."
+  ],
+  "known_issues": [
+    "Left sidebar menu is broken/needs fixing (reported by user).",
+    "Form Builder item/link is missing from the left sidebar navigation (user cannot find/access Form Builder from sidebar).",
+    "Form Builder fails to create a Form Definition (user reports form definition creation is failing during testing).",
+    "Form Builder is not saving/persisting Form Definitions (user reports form definition save is failing)."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
       "id": "feature-implement-authentication-and-role-based-access-control-so-that-only-admin-users-can-create-edit-master-data-master-lists-and-form-definitions-non-admin-users-can-only-work-on-tasks-and-submit-assigned-forms-according-to-task-visibility-rules",
@@ -85,6 +92,94 @@
         "REQ-10"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-fix-the-left-sidebar-menu-so-it-renders-and-behaves-correctly-across-the-app-including-1-menu-sections-and-items-are-consistently-visible-and-clickable-2-clicking-an-item-navigates-to-the-correct-route-3-the-active-menu-item-is-highlighted-correctly-for-exact-and-nested-routes-and-4-the-sidebar-collapse-expand-trigger-works-without-breaking-layout",
+      "title": "Fix the left sidebar menu so it renders and behaves correctly across the app, including: (1) menu sections and items are consistently visible and clickable, (2) clicking an item navigates to the correct route, (3) the active menu item is highlighted correctly for exact and nested routes, and (4) the sidebar collapse/expand trigger works without breaking layout.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-form-builder-create-flow-so-creating-a-new-form-definition-does-not-fail-due-to-an-invalid-missing-creator-principal-being-sent-from-the-frontend",
+      "title": "Fix the Form Builder create flow so creating a new Form Definition does not fail due to an invalid/missing `creator` Principal being sent from the frontend.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-missing-react-query-fetch-hooks-for-form-definitions-so-the-form-builder-can-load-and-display-existing-form-definitions-using-the-backend-apis",
+      "title": "Implement missing React Query fetch hooks for form definitions so the Form Builder can load and display existing form definitions using the backend APIs.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-form-builder-create-save-flow-so-that-creating-a-new-form-definition-from-the-ui-successfully-persists-the-definition-in-the-backend-and-it-appears-in-the-form-definitions-list-after-save-and-after-a-full-page-reload",
+      "title": "Fix the Form Builder create/save flow so that creating a new Form Definition from the UI successfully persists the definition in the backend and it appears in the Form Definitions list after save and after a full page reload.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-correct-the-form-builder-payload-encoding-to-match-the-backend-candid-types-for-formdefinition-formfield-including-variant-and-optional-field-shapes-so-backend-calls-to-createformdefinition-and-updateformdefinition-accept-the-data-without-traps",
+      "title": "Correct the Form Builder payload encoding to match the backend candid types for FormDefinition/FormField (including variant and optional field shapes) so backend calls to createFormDefinition and updateFormDefinition accept the data without traps.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-edit-flow-on-the-form-builder-page-so-an-admin-can-open-an-existing-form-definition-from-the-list-modify-it-and-save-changes-using-updateformdefinition-ensure-the-list-reflects-updates",
+      "title": "Add an edit flow on the Form Builder page so an Admin can open an existing Form Definition from the list, modify it, and save changes using updateFormDefinition; ensure the list reflects updates.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-test-the-full-admin-form-builder-workflow-end-to-end-create-list-edit-delete-and-fix-any-discovered-issues-that-prevent-completion-of-the-workflow-before-publishing",
+      "title": "Test the full Admin Form Builder workflow end-to-end (create, list, edit, delete) and fix any discovered issues that prevent completion of the workflow before publishing.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-up-react-query-hooks-for-task-definitions-tasks-and-task-form-submissions-so-they-call-real-backend-actor-methods-instead-of-returning-placeholders",
+      "title": "Wire up React Query hooks for task definitions, tasks, and task form submissions so they call real backend actor methods instead of returning placeholders.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-placeholder-admin-task-definitions-page-with-a-working-ui-to-list-create-and-edit-task-definitions-including-selecting-one-or-more-existing-form-definitions-multi-select-and-enforcing-the-at-least-one-form-rule-in-the-ui",
+      "title": "Replace the placeholder Admin Task Definitions page with a working UI to list, create, and edit Task Definitions, including selecting one or more existing Form Definitions (multi-select) and enforcing the “at least one form” rule in the UI.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-placeholder-create-task-page-with-a-working-ui-that-allows-creating-a-task-from-a-selected-task-definition-and-required-task-metadata-then-navigates-to-the-new-task-s-detail-page",
+      "title": "Replace the placeholder Create Task page with a working UI that allows creating a Task from a selected Task Definition and required task metadata, then navigates to the new Task’s detail page.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-the-task-detail-fill-form-and-view-submission-actions-so-users-can-open-an-attached-form-submit-it-for-the-task-and-then-view-the-saved-submission-from-the-task-s-forms-panel",
+      "title": "Implement the Task Detail “fill form” and “view submission” actions so users can open an attached form, submit it for the task, and then view the saved submission from the task’s forms panel.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -134,6 +229,58 @@
       "id": "AR-8",
       "summary": "Escalation & TAT/SLA: Implement task escalation rules with TAT/SLA tracking.",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "UI/Navigation: Close/disable side previews (hide the side preview panel in the UI).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Ensure the left sidebar renders a visible and clickable \"Form Builder\" navigation item under the \"Administration\" section for Admin users, and that clicking it navigates to the existing Form Builder route at \"/admin/forms\".",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Ensure the left sidebar contains a visible and clickable “Form Builder” navigation item under the “Administration” section for Admin users, and that it navigates to the existing route “/admin/forms” and highlights as active when on that route.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Task Definitions: Admin must select at least one existing Form Definition (optionally multiple) when creating a Task Definition; task instances include all selected forms and end-users can fill and save each attached form individually within the task.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Implement backend support for Task Definitions that require at least one attached Form Definition and allow attaching multiple forms per Task Definition.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Implement backend APIs to create Task instances from a selected Task Definition and ensure new tasks inherit the definition’s attached forms and initialize per-form completion tracking as incomplete for each attached form.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Implement backend support for task-scoped form submissions so that each attached form can be filled and saved/submitted individually within a task, and completion status updates per form upon submission.",
+      "reqIds": [
+        "REQ-22"
+      ],
       "status": "pending"
     }
   ],

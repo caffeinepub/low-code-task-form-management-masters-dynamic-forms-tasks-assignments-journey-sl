@@ -10,6 +10,8 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type AssignmentType = { 'user' : Principal } |
+  { 'department' : string };
 export interface Category {
   'id' : string,
   'created' : bigint,
@@ -22,12 +24,20 @@ export interface Department {
   'name' : string,
   'lastUpdated' : bigint,
 }
+export interface DynamicFormInput {
+  'data' : Array<FormFieldInput>,
+  'submittedAt' : bigint,
+  'submittedBy' : Principal,
+  'version' : bigint,
+  'formId' : string,
+}
 export interface EscalationRule {
   'id' : string,
   'action' : string,
   'taskType' : string,
   'thresholdMinutes' : bigint,
 }
+export type ExternalBlob = Uint8Array;
 export type FieldType = { 'date' : null } |
   { 'multiSelect' : null } |
   { 'fileUpload' : null } |
@@ -36,6 +46,13 @@ export type FieldType = { 'date' : null } |
   { 'singleLine' : null } |
   { 'dateTime' : null } |
   { 'dropdown' : null };
+export type FieldValue = { 'date' : bigint } |
+  { 'file' : ExternalBlob } |
+  { 'text' : string } |
+  { 'singleChoice' : string } |
+  { 'number' : bigint } |
+  { 'multipleChoices' : Array<string> } |
+  { 'dateTime' : bigint };
 export interface FormDefinition {
   'id' : string,
   'created' : bigint,
@@ -53,6 +70,7 @@ export interface FormField {
   'options' : [] | [Array<FormFieldOption>],
   'fieldType' : FieldType,
 }
+export interface FormFieldInput { 'value' : FieldValue, 'fieldId' : string }
 export interface FormFieldOption { 'value' : string, 'fieldLabel' : string }
 export interface MasterList {
   'id' : string,
@@ -73,6 +91,37 @@ export interface Status {
   'created' : bigint,
   'name' : string,
   'lastUpdated' : bigint,
+}
+export interface Task {
+  'id' : string,
+  'status' : string,
+  'completionDate' : [] | [bigint],
+  'assignment' : [] | [AssignmentType],
+  'owner' : Principal,
+  'attachedForms' : Array<TaskFormAttachment>,
+  'createdDate' : bigint,
+  'dueDate' : bigint,
+  'taskType' : string,
+  'priority' : string,
+}
+export type TaskAction = { 'assigned' : null } |
+  { 'created' : null } |
+  { 'escalated' : null } |
+  { 'completed' : null } |
+  { 'formSubmitted' : null } |
+  { 'pickedUp' : null } |
+  { 'statusChanged' : null } |
+  { 'reassigned' : null };
+export interface TaskAuditEntry {
+  'action' : TaskAction,
+  'user' : Principal,
+  'taskId' : string,
+  'timestamp' : bigint,
+  'details' : string,
+}
+export interface TaskFormAttachment {
+  'completed' : boolean,
+  'formDefinitionId' : string,
 }
 export interface TaskType {
   'id' : string,
@@ -124,6 +173,7 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'assignTask' : ActorMethod<[string, AssignmentType], undefined>,
   'createCategory' : ActorMethod<[Category], undefined>,
   'createDepartment' : ActorMethod<[Department], undefined>,
   'createEscalationRule' : ActorMethod<[EscalationRule], undefined>,
@@ -131,6 +181,7 @@ export interface _SERVICE {
   'createMasterList' : ActorMethod<[MasterList], undefined>,
   'createPriority' : ActorMethod<[Priority], undefined>,
   'createStatus' : ActorMethod<[Status], undefined>,
+  'createTask' : ActorMethod<[Task], undefined>,
   'createTaskType' : ActorMethod<[TaskType], undefined>,
   'deleteCategory' : ActorMethod<[string], undefined>,
   'deleteDepartment' : ActorMethod<[string], undefined>,
@@ -140,11 +191,37 @@ export interface _SERVICE {
   'deletePriority' : ActorMethod<[string], undefined>,
   'deleteStatus' : ActorMethod<[string], undefined>,
   'deleteTaskType' : ActorMethod<[string], undefined>,
+  'getAllFormSubmissions' : ActorMethod<[], Array<DynamicFormInput>>,
+  'getAllTasks' : ActorMethod<[], Array<Task>>,
+  'getAssignedTasks' : ActorMethod<[], Array<Task>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCategories' : ActorMethod<[], Array<Category>>,
+  'getCategory' : ActorMethod<[string], [] | [Category]>,
+  'getDepartment' : ActorMethod<[string], [] | [Department]>,
+  'getDepartments' : ActorMethod<[], Array<Department>>,
+  'getEscalationRule' : ActorMethod<[string], [] | [EscalationRule]>,
+  'getEscalationRules' : ActorMethod<[], Array<EscalationRule>>,
+  'getFormDefinition' : ActorMethod<[string], [] | [FormDefinition]>,
+  'getFormDefinitions' : ActorMethod<[], Array<FormDefinition>>,
+  'getFormSubmission' : ActorMethod<[string], [] | [DynamicFormInput]>,
+  'getMasterList' : ActorMethod<[string], [] | [MasterList]>,
+  'getMasterLists' : ActorMethod<[], Array<MasterList>>,
+  'getMyFormSubmissions' : ActorMethod<[], Array<DynamicFormInput>>,
+  'getMyTasks' : ActorMethod<[], Array<Task>>,
+  'getPriorities' : ActorMethod<[], Array<Priority>>,
+  'getPriority' : ActorMethod<[string], [] | [Priority]>,
+  'getStatus' : ActorMethod<[string], [] | [Status]>,
+  'getStatuses' : ActorMethod<[], Array<Status>>,
+  'getTask' : ActorMethod<[string], [] | [Task]>,
+  'getTaskAuditLog' : ActorMethod<[string], Array<TaskAuditEntry>>,
+  'getTaskType' : ActorMethod<[string], [] | [TaskType]>,
+  'getTaskTypes' : ActorMethod<[], Array<TaskType>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'submitForm' : ActorMethod<[DynamicFormInput], string>,
+  'submitTaskForm' : ActorMethod<[string, DynamicFormInput], undefined>,
   'updateCategory' : ActorMethod<[string, Category], undefined>,
   'updateDepartment' : ActorMethod<[string, Department], undefined>,
   'updateEscalationRule' : ActorMethod<[string, EscalationRule], undefined>,
@@ -152,6 +229,7 @@ export interface _SERVICE {
   'updateMasterList' : ActorMethod<[string, MasterList], undefined>,
   'updatePriority' : ActorMethod<[string, Priority], undefined>,
   'updateStatus' : ActorMethod<[string, Status], undefined>,
+  'updateTask' : ActorMethod<[string, Task], undefined>,
   'updateTaskType' : ActorMethod<[string, TaskType], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;

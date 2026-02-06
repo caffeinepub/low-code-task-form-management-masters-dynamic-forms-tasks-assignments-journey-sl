@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, GripVertical } from 'lucide-react';
 import FieldDefinitionRow from './FieldDefinitionRow';
+import { FieldType } from '../../backend';
 import type { FormField } from '../../backend';
 
 type FormDefinitionEditorProps = {
@@ -24,8 +24,10 @@ export default function FormDefinitionEditor({
     const newField: FormField = {
       id: crypto.randomUUID(),
       fieldLabel: 'New Field',
-      fieldType: { __kind__: 'singleLine' } as any,
-      validations: { required: false },
+      fieldType: FieldType.singleLine,
+      validations: undefined,
+      options: undefined,
+      masterListRef: undefined,
     };
     onFieldsChange([...fields, newField]);
   };

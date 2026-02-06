@@ -8,8 +8,7 @@ export function useGetFormDefinitions() {
     queryKey: ['formDefinitions'],
     queryFn: async () => {
       if (!actor) return [];
-      // Backend needs: getAllFormDefinitions query method
-      return [];
+      return actor.getFormDefinitions();
     },
     enabled: !!actor && !isFetching,
   });
@@ -21,8 +20,7 @@ export function useGetFormDefinition(id: string) {
     queryKey: ['formDefinition', id],
     queryFn: async () => {
       if (!actor) return null;
-      // Backend needs: getFormDefinition(id) query method
-      return null;
+      return actor.getFormDefinition(id);
     },
     enabled: !!actor && !isFetching && !!id,
   });
@@ -52,8 +50,9 @@ export function useUpdateFormDefinition() {
       if (!actor) throw new Error('Actor not available');
       return actor.updateFormDefinition(id, formDefinition);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['formDefinitions'] });
+      queryClient.invalidateQueries({ queryKey: ['formDefinition', variables.id] });
     },
   });
 }

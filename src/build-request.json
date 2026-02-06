@@ -1,241 +1,156 @@
 {
   "kind": "build_request",
-  "title": "Low-code Task & Form Management (masters, dynamic forms, tasks, assignments, journey, SLA)",
+  "title": "Implement Task Definitions with required multi-form attachment and per-form submissions inside tasks",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Implement authentication and role-based access control so that only Admin users can create/edit master data, master lists, and form definitions; non-admin users can only work on tasks and submit assigned forms according to task visibility rules.",
-      "target": "both",
+      "id": "REQ-20",
+      "text": "Implement backend support for Task Definitions that require at least one attached Form Definition and allow attaching multiple forms per Task Definition.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-7"
+          "msg-1"
         ],
         "quotes": [
-          "Masters must be: Editable only by Admin roles",
-          "Ensure scalability, security, and ease of customization"
+          "A task should always contain at least one form there should be options to select more than one form in a task."
         ]
       },
       "acceptanceCriteria": [
-        "Users authenticate via Internet Identity and a logged-in principal is available to the app",
-        "There is a backend-enforced Admin role check for all admin-only mutations (not just frontend hiding)",
-        "Non-admin users cannot call admin-only backend methods successfully",
-        "UI shows admin navigation/pages only to Admin users and shows a clear English message like \"You do not have access\" when blocked"
+        "A TaskDefinition type exists in backend/main.mo with an ordered list of attached form references (at minimum: formId, and optionally a version).",
+        "Backend exposes query methods to list and fetch Task Definitions (e.g., list/get by id) usable by the frontend.",
+        "Backend exposes Admin-only mutation methods to create and update Task Definitions.",
+        "Backend rejects create/update of a Task Definition when the attached forms list is empty, returning an explicit error (trap/message) rather than silently accepting it."
       ]
     },
     {
-      "id": "REQ-2",
-      "text": "Create Master Data Management for fixed masters (Users, Roles, Departments, Statuses, Categories, Priorities) and user-defined master lists, including CRUD operations, lookup support, and Admin-only edit permissions.",
-      "target": "both",
+      "id": "REQ-21",
+      "text": "Implement backend APIs to create Task instances from a selected Task Definition and ensure new tasks inherit the definition’s attached forms and initialize per-form completion tracking as incomplete for each attached form.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "Create dedicated Master Forms for configurable data such as: Users, Roles, Departments; Statuses, Categories, Priorities; Any user-defined master list",
-          "Editable only by Admin roles",
-          "Referencable across all other forms",
-          "Use Lookup fields to connect masters to transactional forms."
+          "An Admin creates a Task Definition → selects one or more form definitions → the task is later created normally, and users simply fill the attached forms inside that task."
         ]
       },
       "acceptanceCriteria": [
-        "Backend provides CRUD for each fixed master type and for generic user-defined master lists (list + items)",
-        "Admin can create/edit/deactivate master items; non-admin cannot",
-        "Frontend provides Admin screens to manage all masters and user-defined master lists",
-        "Lookups return current (non-deactivated) master items and can be queried by master list/type",
-        "Changing master items is reflected immediately in lookup options used by custom forms (no data duplication of option lists)"
+        "Backend exposes a create-task flow that takes a Task Definition id and task metadata and produces a new Task.",
+        "The created Task.attachedForms matches the Task Definition’s attached forms.",
+        "The created Task.formCompletionStatus includes an entry for every attached form, all initialized to not completed.",
+        "The created Task is readable via an API used by the existing Task Detail route (/tasks/$taskId)."
       ]
     },
     {
-      "id": "REQ-3",
-      "text": "Implement a dynamic Form Definition model with versioning and field definitions so Admin users can build reusable forms, including validation metadata and support for: Single Line, Multi Line, Number, Date, Date-Time, Dropdown, Multi-Select, and File Upload fields.",
-      "target": "both",
+      "id": "REQ-22",
+      "text": "Implement backend support for task-scoped form submissions so that each attached form can be filled and saved/submitted individually within a task, and completion status updates per form upon submission.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "Design a Form Definition model using Zoho Creator forms to simulate a Form Builder.",
-          "Allow Admin users to: Define form name, description, and version; Add field definitions (field type, label, mandatory, validation rules)",
-          "Support common field types: Single Line, Multi Line; Number, Date, Date-Time; Dropdown, Multi-Select; File Upload"
+          "It means Every form can be filled and saved individually with in a Task."
         ]
       },
       "acceptanceCriteria": [
-        "Backend supports creating a Form Definition and publishing a new version without overwriting prior versions",
-        "Each form version contains an ordered list of field definitions including: label, field type, required flag, and validation metadata",
-        "Dropdown and Multi-Select field definitions can be configured to reference either a fixed master type or a user-defined master list via lookup",
-        "Frontend provides an Admin \"Form Builder\" UI to create/edit/publish form definitions and versions",
-        "Field types listed in the requirement are renderable in the end-user form renderer"
+        "Backend exposes a submit API for saving a form submission that includes taskId, formId, formVersion, and field data.",
+        "On successful submission, backend marks the corresponding entry in the task’s formCompletionStatus as completed for that formId.",
+        "Backend exposes query methods to (a) list submissions for a task and (b) fetch a submission by submissionId, matching the frontend needs in frontend/src/hooks/forms/useFormSubmissions.ts.",
+        "Submission fetching supports the existing FormSubmissionViewPage route (/tasks/$taskId/submissions/$submissionId)."
       ]
     },
     {
-      "id": "REQ-4",
-      "text": "Enable custom form fields to reference master data via lookups, with dropdown and multi-select options loaded dynamically from masters at runtime, and ensure master changes automatically reflect in all dependent form renders.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Enable custom form fields to reference Master Forms via Lookup relationships.",
-          "Allow dropdown and multi-select fields to dynamically load master values.",
-          "Ensure master data changes reflect automatically in all dependent forms."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When rendering a form with lookup fields, the frontend fetches options from backend master endpoints (not stored in the form definition as static options)",
-        "If a master item is renamed, new renders show the updated name without needing to republish the form version",
-        "If a master item is deactivated, it no longer appears in new selections; previously submitted values remain viewable"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Store custom forms as reusable entities that can be linked to multiple task definitions, and implement submission tracking per form version including a read-only view of prior submissions.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Store custom forms as reusable entities.",
-          "Allow the same custom form to be linked to multiple Tasks.",
-          "Maintain form version history and submission tracking."
-        ]
-      },
-      "acceptanceCriteria": [
-        "A task definition can reference one or more reusable form definitions (with a specific version or a \"latest published\" strategy)",
-        "Backend stores each submission with references to: task instance, form definition id, form version, submitter, and timestamps",
-        "Frontend shows per-task a list of attached forms with completion/submission status and allows viewing submitted data read-only"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Implement Task Definitions and Task Instances that support attaching multiple custom forms and tracking per-form completion status, including task metadata: Task Type, Priority, Status, Owner, Created Date, Due Date, and Completion Date.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Create a Task Definition that: Supports attaching multiple custom forms using Subforms or related forms; Tracks form-wise completion status",
-          "Task Type, Priority, Status, Owner; Created Date, Due Date, Completion Date",
-          "Create a Task using task definition which includes:"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin can create and edit Task Definitions and attach multiple form definitions to each task definition",
-        "Users can create Task Instances from a selected Task Definition",
-        "Each task instance shows a per-form status (e.g., Not started / In progress / Submitted) derived from submissions",
-        "Task instance stores and displays the required metadata fields and updates Completion Date when marked completed"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Implement assignment and reassignment workflows: tasks can be assigned to a department pool or a specific user; department-assigned tasks can be picked up by a department member; tasks can be reassigned to another department/user while enforcing visibility rules.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Assign task to a department/user, where a department task can be picked via a department user from assigned tasks pool",
-          "A user can reassign the task to another department/user to whom task has visibility"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend supports assigning a task to (a) a department pool or (b) a specific user",
-        "Backend supports \"pickup\" action for department members that assigns the task to the picking user and records the event",
-        "Backend supports reassignment to a different department or user with permission checks (only current assignee/owner/admin per defined rules)",
-        "Frontend provides: a department pool view, a \"My Tasks\" view, and actions for pickup and reassignment where allowed",
-        "Visibility: a user can only see tasks assigned to them or assigned to their department pool (and admin can see all)"
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "text": "Provide task journey tracking (audit history) showing the lifecycle of a task across status changes, assignments, pickups, reassignments, and form submissions, viewable in the UI.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Journey of a task can be viewed"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend stores an append-only event log per task containing: event type, timestamp, actor, and relevant details (from/to assignee/department, status changes, submitted form id/version)",
-        "Frontend shows a chronological \"Task Journey\" timeline on the task detail page",
-        "Journey entries are human-readable in English"
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "text": "Implement escalation rules and TAT/SLA tracking for tasks, including calculating elapsed time vs due time, a task SLA status (On track / At risk / Breached), and recording escalation events when thresholds are exceeded.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Task Escalation with TAT",
-          "tracks TAT/SLA"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Task definitions allow configuring SLA/TAT parameters (at minimum: target duration and escalation threshold(s))",
-        "Backend computes SLA status for task instances based on Created Date / Due Date / configured thresholds",
-        "When a task crosses an escalation threshold, an escalation event is recorded in the task journey",
-        "Frontend displays SLA status clearly on task lists and task detail pages"
-      ]
-    },
-    {
-      "id": "REQ-10",
-      "text": "Create a coherent, consistent UI theme for an enterprise admin/workflow tool (colors, typography, spacing, and component styling) and apply it across Admin (masters/forms/task definitions) and User (tasks/forms/journey) areas using Tailwind + existing UI components.",
+      "id": "REQ-23",
+      "text": "Wire up React Query hooks for task definitions, tasks, and task form submissions so they call real backend actor methods instead of returning placeholders.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "Build a low-code, configuration-driven application",
-          "Ensure scalability, security, and ease of customization"
+          "yes implement again"
         ]
       },
       "acceptanceCriteria": [
-        "App has a consistent layout with clear navigation separating Admin configuration from Task work",
-        "Typography, spacing, and interactive states (hover/active/disabled) are consistent across pages",
-        "User-facing text is in English"
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts no longer returns empty arrays/null for task definition and task queries when an actor is available.",
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts mutations (create task definition, update task definition, create task) call corresponding backend actor methods and invalidate appropriate query keys.",
+        "frontend/src/hooks/forms/useFormSubmissions.ts query hooks (getTaskSubmissions, getSubmission) and mutation (useSubmitForm) call corresponding backend actor methods and invalidate caches as expected.",
+        "Any user-facing error messages shown as a result of failed calls are in English."
+      ]
+    },
+    {
+      "id": "REQ-24",
+      "text": "Replace the placeholder Admin Task Definitions page with a working UI to list, create, and edit Task Definitions, including selecting one or more existing Form Definitions (multi-select) and enforcing the “at least one form” rule in the UI.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "An Admin creates a Task Definition → selects one or more form definitions"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Admin route /admin/task-definitions (frontend/src/pages/admin/TaskDefinitionsPage.tsx) displays existing task definitions from the backend.",
+        "Admins can create a new Task Definition and select multiple existing Form Definitions to attach.",
+        "The UI prevents saving a Task Definition if no forms are selected and shows a clear English validation message.",
+        "Admins can edit an existing Task Definition and change its attached forms; after saving, the list reflects the update without a full page reload."
+      ]
+    },
+    {
+      "id": "REQ-25",
+      "text": "Replace the placeholder Create Task page with a working UI that allows creating a Task from a selected Task Definition and required task metadata, then navigates to the new Task’s detail page.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "the task is later created normally"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The route /tasks/create (frontend/src/pages/tasks/CreateTaskPage.tsx) loads available Task Definitions and allows selecting one.",
+        "Submitting the Create Task form calls the create task mutation and, on success, navigates to /tasks/$taskId for the newly created task.",
+        "If backend rejects creation (e.g., invalid definition id), the UI shows an English error message and remains on the form page."
+      ]
+    },
+    {
+      "id": "REQ-26",
+      "text": "Implement the Task Detail “fill form” and “view submission” actions so users can open an attached form, submit it for the task, and then view the saved submission from the task’s forms panel.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Every form can be filled and saved individually with in a Task."
+        ]
+      },
+      "acceptanceCriteria": [
+        "On /tasks/$taskId, clicking “Fill Form” opens a form UI for the selected attached form (using existing DynamicFormRenderer) and allows submitting it for that task.",
+        "After submission, the task detail view reflects the updated per-form completion state (e.g., badge switches to Submitted).",
+        "Clicking “View Submission” navigates to /tasks/$taskId/submissions/$submissionId and displays the saved submission using the existing FormSubmissionViewPage.",
+        "All user-facing labels, buttons, and error messages in this flow are in English."
       ]
     }
   ],
   "constraints": [
-    "Use English for all user-facing UI text.",
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit files under frontend/src/components/ui or any other frontend immutablePaths; compose them instead.",
-    "Do not introduce external databases or third-party auth providers; use Internet Identity only."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
+    "Create/upgrade backend/migration.mo only if new stable state or migrations are required; follow the project migration policy (conditional).",
+    "Do not edit files under frontend/src/components/ui (shadcn components); compose them instead.",
+    "Do not edit immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx.",
+    "Use React + TypeScript + Tailwind + React Query per the existing stack; no third-party auth beyond Internet Identity.",
+    "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "No third-party integrations (email/SMS/push notifications, Slack, etc.).",
-    "No real-time updates via WebSockets.",
-    "No advanced analytics/report builder beyond what is required for task lists, task detail, and journey views."
+    "Implementing the alternative flow where a new Task instance is automatically created by submitting a standalone form (form-driven task generation without task creation).",
+    "Adding real-time updates (WebSockets) or push notifications for task/form state changes.",
+    "Introducing external databases or non-Motoko backend services."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [
-      "Build a low-code, configuration-driven Task & Form Management application with master data, dynamic reusable forms, task assignment workflows, journey tracking, and SLA/escalation tracking."
-    ],
-    "goalsToRemove": [],
-    "preferencesToAdd": [
-      "Use English for user-facing text."
-    ],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

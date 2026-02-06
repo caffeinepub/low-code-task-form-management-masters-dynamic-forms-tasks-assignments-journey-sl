@@ -24,6 +24,10 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const AssignmentType = IDL.Variant({
+  'user' : IDL.Principal,
+  'department' : IDL.Text,
+});
 export const Category = IDL.Record({
   'id' : IDL.Text,
   'created' : IDL.Int,
@@ -103,16 +107,70 @@ export const Status = IDL.Record({
   'name' : IDL.Text,
   'lastUpdated' : IDL.Int,
 });
+export const TaskFormAttachment = IDL.Record({
+  'completed' : IDL.Bool,
+  'formDefinitionId' : IDL.Text,
+});
+export const Task = IDL.Record({
+  'id' : IDL.Text,
+  'status' : IDL.Text,
+  'completionDate' : IDL.Opt(IDL.Int),
+  'assignment' : IDL.Opt(AssignmentType),
+  'owner' : IDL.Principal,
+  'attachedForms' : IDL.Vec(TaskFormAttachment),
+  'createdDate' : IDL.Int,
+  'dueDate' : IDL.Int,
+  'taskType' : IDL.Text,
+  'priority' : IDL.Text,
+});
 export const TaskType = IDL.Record({
   'id' : IDL.Text,
   'created' : IDL.Int,
   'name' : IDL.Text,
   'lastUpdated' : IDL.Int,
 });
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const FieldValue = IDL.Variant({
+  'date' : IDL.Int,
+  'file' : ExternalBlob,
+  'text' : IDL.Text,
+  'singleChoice' : IDL.Text,
+  'number' : IDL.Int,
+  'multipleChoices' : IDL.Vec(IDL.Text),
+  'dateTime' : IDL.Int,
+});
+export const FormFieldInput = IDL.Record({
+  'value' : FieldValue,
+  'fieldId' : IDL.Text,
+});
+export const DynamicFormInput = IDL.Record({
+  'data' : IDL.Vec(FormFieldInput),
+  'submittedAt' : IDL.Int,
+  'submittedBy' : IDL.Principal,
+  'version' : IDL.Nat,
+  'formId' : IDL.Text,
+});
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
   'email' : IDL.Opt(IDL.Text),
   'department' : IDL.Opt(IDL.Text),
+});
+export const TaskAction = IDL.Variant({
+  'assigned' : IDL.Null,
+  'created' : IDL.Null,
+  'escalated' : IDL.Null,
+  'completed' : IDL.Null,
+  'formSubmitted' : IDL.Null,
+  'pickedUp' : IDL.Null,
+  'statusChanged' : IDL.Null,
+  'reassigned' : IDL.Null,
+});
+export const TaskAuditEntry = IDL.Record({
+  'action' : TaskAction,
+  'user' : IDL.Principal,
+  'taskId' : IDL.Text,
+  'timestamp' : IDL.Int,
+  'details' : IDL.Text,
 });
 
 export const idlService = IDL.Service({
@@ -144,6 +202,7 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'assignTask' : IDL.Func([IDL.Text, AssignmentType], [], []),
   'createCategory' : IDL.Func([Category], [], []),
   'createDepartment' : IDL.Func([Department], [], []),
   'createEscalationRule' : IDL.Func([EscalationRule], [], []),
@@ -151,6 +210,7 @@ export const idlService = IDL.Service({
   'createMasterList' : IDL.Func([MasterList], [], []),
   'createPriority' : IDL.Func([Priority], [], []),
   'createStatus' : IDL.Func([Status], [], []),
+  'createTask' : IDL.Func([Task], [], []),
   'createTaskType' : IDL.Func([TaskType], [], []),
   'deleteCategory' : IDL.Func([IDL.Text], [], []),
   'deleteDepartment' : IDL.Func([IDL.Text], [], []),
@@ -160,8 +220,52 @@ export const idlService = IDL.Service({
   'deletePriority' : IDL.Func([IDL.Text], [], []),
   'deleteStatus' : IDL.Func([IDL.Text], [], []),
   'deleteTaskType' : IDL.Func([IDL.Text], [], []),
+  'getAllFormSubmissions' : IDL.Func(
+      [],
+      [IDL.Vec(DynamicFormInput)],
+      ['query'],
+    ),
+  'getAllTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
+  'getAssignedTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
+  'getCategory' : IDL.Func([IDL.Text], [IDL.Opt(Category)], ['query']),
+  'getDepartment' : IDL.Func([IDL.Text], [IDL.Opt(Department)], ['query']),
+  'getDepartments' : IDL.Func([], [IDL.Vec(Department)], ['query']),
+  'getEscalationRule' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(EscalationRule)],
+      ['query'],
+    ),
+  'getEscalationRules' : IDL.Func([], [IDL.Vec(EscalationRule)], ['query']),
+  'getFormDefinition' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(FormDefinition)],
+      ['query'],
+    ),
+  'getFormDefinitions' : IDL.Func([], [IDL.Vec(FormDefinition)], ['query']),
+  'getFormSubmission' : IDL.Func(
+      [IDL.Text],
+      [IDL.Opt(DynamicFormInput)],
+      ['query'],
+    ),
+  'getMasterList' : IDL.Func([IDL.Text], [IDL.Opt(MasterList)], ['query']),
+  'getMasterLists' : IDL.Func([], [IDL.Vec(MasterList)], ['query']),
+  'getMyFormSubmissions' : IDL.Func([], [IDL.Vec(DynamicFormInput)], ['query']),
+  'getMyTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
+  'getPriorities' : IDL.Func([], [IDL.Vec(Priority)], ['query']),
+  'getPriority' : IDL.Func([IDL.Text], [IDL.Opt(Priority)], ['query']),
+  'getStatus' : IDL.Func([IDL.Text], [IDL.Opt(Status)], ['query']),
+  'getStatuses' : IDL.Func([], [IDL.Vec(Status)], ['query']),
+  'getTask' : IDL.Func([IDL.Text], [IDL.Opt(Task)], ['query']),
+  'getTaskAuditLog' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(TaskAuditEntry)],
+      ['query'],
+    ),
+  'getTaskType' : IDL.Func([IDL.Text], [IDL.Opt(TaskType)], ['query']),
+  'getTaskTypes' : IDL.Func([], [IDL.Vec(TaskType)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -169,6 +273,8 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'submitForm' : IDL.Func([DynamicFormInput], [IDL.Text], []),
+  'submitTaskForm' : IDL.Func([IDL.Text, DynamicFormInput], [], []),
   'updateCategory' : IDL.Func([IDL.Text, Category], [], []),
   'updateDepartment' : IDL.Func([IDL.Text, Department], [], []),
   'updateEscalationRule' : IDL.Func([IDL.Text, EscalationRule], [], []),
@@ -176,6 +282,7 @@ export const idlService = IDL.Service({
   'updateMasterList' : IDL.Func([IDL.Text, MasterList], [], []),
   'updatePriority' : IDL.Func([IDL.Text, Priority], [], []),
   'updateStatus' : IDL.Func([IDL.Text, Status], [], []),
+  'updateTask' : IDL.Func([IDL.Text, Task], [], []),
   'updateTaskType' : IDL.Func([IDL.Text, TaskType], [], []),
 });
 
@@ -197,6 +304,10 @@ export const idlFactory = ({ IDL }) => {
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
+  });
+  const AssignmentType = IDL.Variant({
+    'user' : IDL.Principal,
+    'department' : IDL.Text,
   });
   const Category = IDL.Record({
     'id' : IDL.Text,
@@ -277,16 +388,70 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'lastUpdated' : IDL.Int,
   });
+  const TaskFormAttachment = IDL.Record({
+    'completed' : IDL.Bool,
+    'formDefinitionId' : IDL.Text,
+  });
+  const Task = IDL.Record({
+    'id' : IDL.Text,
+    'status' : IDL.Text,
+    'completionDate' : IDL.Opt(IDL.Int),
+    'assignment' : IDL.Opt(AssignmentType),
+    'owner' : IDL.Principal,
+    'attachedForms' : IDL.Vec(TaskFormAttachment),
+    'createdDate' : IDL.Int,
+    'dueDate' : IDL.Int,
+    'taskType' : IDL.Text,
+    'priority' : IDL.Text,
+  });
   const TaskType = IDL.Record({
     'id' : IDL.Text,
     'created' : IDL.Int,
     'name' : IDL.Text,
     'lastUpdated' : IDL.Int,
   });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const FieldValue = IDL.Variant({
+    'date' : IDL.Int,
+    'file' : ExternalBlob,
+    'text' : IDL.Text,
+    'singleChoice' : IDL.Text,
+    'number' : IDL.Int,
+    'multipleChoices' : IDL.Vec(IDL.Text),
+    'dateTime' : IDL.Int,
+  });
+  const FormFieldInput = IDL.Record({
+    'value' : FieldValue,
+    'fieldId' : IDL.Text,
+  });
+  const DynamicFormInput = IDL.Record({
+    'data' : IDL.Vec(FormFieldInput),
+    'submittedAt' : IDL.Int,
+    'submittedBy' : IDL.Principal,
+    'version' : IDL.Nat,
+    'formId' : IDL.Text,
+  });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
     'email' : IDL.Opt(IDL.Text),
     'department' : IDL.Opt(IDL.Text),
+  });
+  const TaskAction = IDL.Variant({
+    'assigned' : IDL.Null,
+    'created' : IDL.Null,
+    'escalated' : IDL.Null,
+    'completed' : IDL.Null,
+    'formSubmitted' : IDL.Null,
+    'pickedUp' : IDL.Null,
+    'statusChanged' : IDL.Null,
+    'reassigned' : IDL.Null,
+  });
+  const TaskAuditEntry = IDL.Record({
+    'action' : TaskAction,
+    'user' : IDL.Principal,
+    'taskId' : IDL.Text,
+    'timestamp' : IDL.Int,
+    'details' : IDL.Text,
   });
   
   return IDL.Service({
@@ -318,6 +483,7 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'assignTask' : IDL.Func([IDL.Text, AssignmentType], [], []),
     'createCategory' : IDL.Func([Category], [], []),
     'createDepartment' : IDL.Func([Department], [], []),
     'createEscalationRule' : IDL.Func([EscalationRule], [], []),
@@ -325,6 +491,7 @@ export const idlFactory = ({ IDL }) => {
     'createMasterList' : IDL.Func([MasterList], [], []),
     'createPriority' : IDL.Func([Priority], [], []),
     'createStatus' : IDL.Func([Status], [], []),
+    'createTask' : IDL.Func([Task], [], []),
     'createTaskType' : IDL.Func([TaskType], [], []),
     'deleteCategory' : IDL.Func([IDL.Text], [], []),
     'deleteDepartment' : IDL.Func([IDL.Text], [], []),
@@ -334,8 +501,56 @@ export const idlFactory = ({ IDL }) => {
     'deletePriority' : IDL.Func([IDL.Text], [], []),
     'deleteStatus' : IDL.Func([IDL.Text], [], []),
     'deleteTaskType' : IDL.Func([IDL.Text], [], []),
+    'getAllFormSubmissions' : IDL.Func(
+        [],
+        [IDL.Vec(DynamicFormInput)],
+        ['query'],
+      ),
+    'getAllTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
+    'getAssignedTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCategories' : IDL.Func([], [IDL.Vec(Category)], ['query']),
+    'getCategory' : IDL.Func([IDL.Text], [IDL.Opt(Category)], ['query']),
+    'getDepartment' : IDL.Func([IDL.Text], [IDL.Opt(Department)], ['query']),
+    'getDepartments' : IDL.Func([], [IDL.Vec(Department)], ['query']),
+    'getEscalationRule' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(EscalationRule)],
+        ['query'],
+      ),
+    'getEscalationRules' : IDL.Func([], [IDL.Vec(EscalationRule)], ['query']),
+    'getFormDefinition' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(FormDefinition)],
+        ['query'],
+      ),
+    'getFormDefinitions' : IDL.Func([], [IDL.Vec(FormDefinition)], ['query']),
+    'getFormSubmission' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(DynamicFormInput)],
+        ['query'],
+      ),
+    'getMasterList' : IDL.Func([IDL.Text], [IDL.Opt(MasterList)], ['query']),
+    'getMasterLists' : IDL.Func([], [IDL.Vec(MasterList)], ['query']),
+    'getMyFormSubmissions' : IDL.Func(
+        [],
+        [IDL.Vec(DynamicFormInput)],
+        ['query'],
+      ),
+    'getMyTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
+    'getPriorities' : IDL.Func([], [IDL.Vec(Priority)], ['query']),
+    'getPriority' : IDL.Func([IDL.Text], [IDL.Opt(Priority)], ['query']),
+    'getStatus' : IDL.Func([IDL.Text], [IDL.Opt(Status)], ['query']),
+    'getStatuses' : IDL.Func([], [IDL.Vec(Status)], ['query']),
+    'getTask' : IDL.Func([IDL.Text], [IDL.Opt(Task)], ['query']),
+    'getTaskAuditLog' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(TaskAuditEntry)],
+        ['query'],
+      ),
+    'getTaskType' : IDL.Func([IDL.Text], [IDL.Opt(TaskType)], ['query']),
+    'getTaskTypes' : IDL.Func([], [IDL.Vec(TaskType)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -343,6 +558,8 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'submitForm' : IDL.Func([DynamicFormInput], [IDL.Text], []),
+    'submitTaskForm' : IDL.Func([IDL.Text, DynamicFormInput], [], []),
     'updateCategory' : IDL.Func([IDL.Text, Category], [], []),
     'updateDepartment' : IDL.Func([IDL.Text, Department], [], []),
     'updateEscalationRule' : IDL.Func([IDL.Text, EscalationRule], [], []),
@@ -350,6 +567,7 @@ export const idlFactory = ({ IDL }) => {
     'updateMasterList' : IDL.Func([IDL.Text, MasterList], [], []),
     'updatePriority' : IDL.Func([IDL.Text, Priority], [], []),
     'updateStatus' : IDL.Func([IDL.Text, Status], [], []),
+    'updateTask' : IDL.Func([IDL.Text, Task], [], []),
     'updateTaskType' : IDL.Func([IDL.Text, TaskType], [], []),
   });
 };

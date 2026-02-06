@@ -38,7 +38,7 @@ export default function FormSubmissionViewPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold">Form Submission</h1>
-          <p className="text-muted-foreground mt-2">View submitted form data</p>
+          <p className="text-muted-foreground mt-2">{formDefinition.name}</p>
         </div>
       </div>
 

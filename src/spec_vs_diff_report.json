@@ -1,139 +1,115 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T12:08:45.452Z",
-  "summary": "The diff adds a substantial frontend shell (routing, auth gating, admin nav, masters/form/task UI components) and a new backend/main.mo with types for masters, forms, tasks, audit, SLA, and escalations. However, several BuildRequest acceptance criteria are not evidenced as implemented (notably dynamic lookup loading for dropdown/multi-select, complete master coverage incl. Roles/Users masters + deactivation, and clear form versioning/submission linkage details). The diff also introduces blob-storage and authorization mixins and some extra branding text not requested.",
+  "generatedAt": "2026-02-06T19:36:59.747Z",
+  "summary": "Diff implements task form attachments as per-task attachments with a completed flag (plus a migration), adds UI to fill/submit forms inside Task Detail via a dialog, and adds several React Query hooks for tasks, form submissions, and master data. However, Task Definitions (backend + frontend), creating tasks from a Task Definition, and true task-scoped submissions APIs are not implemented; the Admin Task Definitions page remains a placeholder and the Create Task page creates tasks directly with selected forms rather than from a Task Definition.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Master Data Management for fixed masters (Users, Roles, Departments, Statuses, Categories, Priorities) and user-defined master lists, including CRUD, lookup support, and deactivation behavior.",
-      "reason": "The backend types shown include Department/Category/Status/Priority/TaskType and MasterList, but do not show fixed masters for Users and Roles, nor any deactivation flags/logic. Frontend CRUD components shown do not evidence deactivation support either.",
+      "id": "REQ-20",
+      "requirement": "Backend support for Task Definitions with required non-empty ordered attached form references; query list/get; admin-only create/update; reject empty attached forms explicitly.",
+      "reason": "backend/main.mo changes shown define Task and TaskFormAttachment, but there is no evidence of a TaskDefinition type, list/get APIs, or admin-only create/update methods, nor validation to reject empty attached forms for task definitions. Frontend Admin Task Definitions page explicitly states backend support is not present.",
       "evidence": [
         "backend/main.mo",
-        "frontend/src/components/masters/FixedMasterCrud.tsx",
-        "frontend/src/components/masters/MasterListEditor.tsx"
+        "frontend/src/pages/admin/TaskDefinitionsPage.tsx"
       ]
     },
     {
-      "id": "REQ-4",
-      "requirement": "Dropdown and multi-select options must be loaded dynamically from backend master lookups at runtime (no static options in form definition), reflecting renames/deactivations automatically.",
-      "reason": "DynamicFormRenderer currently renders hard-coded placeholder options for dropdown and multi-select (\"Option 1\"/\"Option 2\") and includes a comment indicating options would be loaded from lookup, but no actual runtime lookup fetching is evidenced.",
+      "id": "REQ-21",
+      "requirement": "Backend API to create Task instances from a selected Task Definition id, inheriting attached forms and initializing per-form completion tracking as incomplete; task readable by Task Detail route.",
+      "reason": "Frontend create flow calls actor.createTask(task) with a fully constructed Task (including attachedForms) rather than calling a create-task-by-definition API. No evidence in backend/main.mo diff of a method that takes a Task Definition id and generates a task that inherits attached forms from the definition.",
       "evidence": [
-        "frontend/src/components/forms/DynamicFormRenderer.tsx"
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
+        "frontend/src/pages/tasks/CreateTaskPage.tsx",
+        "backend/main.mo"
       ]
     },
     {
-      "id": "REQ-3",
-      "requirement": "Dynamic Form Definition model with versioning (publish new version without overwriting prior versions) and ordered fields including validation metadata; dropdown/multi-select fields reference fixed masters or user-defined master lists via lookup.",
-      "reason": "The backend type shown for FormDefinition contains a single 'version' field but no evidence of multiple stored versions or publish mechanics that preserve prior versions. The frontend form renderer also does not show lookup-driven rendering for dropdown/multi-select options.",
+      "id": "REQ-22",
+      "requirement": "Backend task-scoped form submissions: submit API includes taskId, formId, formVersion, and field data; on submit mark task’s per-form completion status completed; query list submissions for a task and fetch by submissionId for the submission view route.",
+      "reason": "Frontend hook comments indicate backend lacks task-specific submission queries (uses actor.getMyFormSubmissions() and returns all user submissions) and derives a synthetic submissionId; useGetSubmission uses actor.getFormSubmission(submissionId) and sets taskId to 'unknown'. No evidence of backend APIs for task-scoped submission listing/fetching or marking task form completion on submission.",
       "evidence": [
-        "backend/main.mo",
-        "frontend/src/components/forms/DynamicFormRenderer.tsx",
-        "frontend/src/components/forms/FieldDefinitionRow.tsx"
+        "frontend/src/hooks/forms/useFormSubmissions.ts"
       ]
     },
     {
-      "id": "REQ-5",
-      "requirement": "Store form submissions per form version with references to task instance, and provide read-only viewing of prior submissions with completion status per task/form.",
-      "reason": "Backend submission type shown (DynamicFormInput) includes formId/version/submittedBy/submittedAt but does not evidence a required reference to a task instance. Frontend has a read-only viewer component, but the task/form submission linkage and status derivation from submissions is not evidenced in the provided diff summary.",
+      "id": "REQ-23",
+      "requirement": "React Query hooks for task definitions, tasks, and task form submissions must call real backend actor methods (no placeholders), including task definition queries/mutations and task-scoped submission queries/mutation with correct cache invalidation; user-facing errors in English.",
+      "reason": "Task definitions hooks are not present/used; Admin Task Definitions page is still placeholder. Form submissions hooks still rely on non-task-scoped backend methods and explicitly note the limitation. Task creation mutation calls actor.createTask but does not match the required create-task-from-definition flow.",
       "evidence": [
-        "backend/main.mo",
-        "frontend/src/components/forms/SubmissionValueViewer.tsx",
-        "frontend/src/App.tsx"
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
+        "frontend/src/hooks/forms/useFormSubmissions.ts",
+        "frontend/src/pages/admin/TaskDefinitionsPage.tsx"
       ]
     },
     {
-      "id": "REQ-8",
-      "requirement": "Task journey tracking with an append-only event log per task and a UI timeline on task detail showing human-readable entries.",
-      "reason": "Backend types for audit entries/actions exist, but no concrete persistence/append-only behavior is evidenced in the truncated backend, and no Task Journey timeline UI is shown in the diff summary (TaskDetailPage is referenced but not included).",
+      "id": "REQ-24",
+      "requirement": "Replace placeholder Admin Task Definitions page with working UI to list/create/edit Task Definitions, multi-select forms, and enforce at-least-one-form validation; updates reflected without full reload.",
+      "reason": "TaskDefinitionsPage.tsx remains explicitly a placeholder: it uses local empty state for taskDefinitions and shows toast messages stating creation/editing/deletion are not available and backend support is needed.",
       "evidence": [
-        "backend/main.mo",
-        "frontend/src/App.tsx"
+        "frontend/src/pages/admin/TaskDefinitionsPage.tsx"
       ]
     },
     {
-      "id": "REQ-9",
-      "requirement": "SLA/TAT configuration on task definitions, backend computation of SLA status, escalation event recording when thresholds are exceeded, and frontend display on lists/details.",
-      "reason": "SLA status badge UI exists, and backend types (EscalationRule/TaskSLAStatus) exist, but the diff summary does not show task-definition-level SLA configuration, backend computations, or logic to record escalation events in the task journey when thresholds are crossed.",
+      "id": "REQ-25",
+      "requirement": "Create Task page should create a Task from a selected Task Definition, call create task mutation, and navigate to the new task’s detail page; show English error on backend rejection.",
+      "reason": "CreateTaskPage.tsx does not load/select Task Definitions. It instead selects task type/priority/status/due date and directly multi-selects Form Definitions, then constructs a Task client-side and calls createTask.mutateAsync(task).",
       "evidence": [
-        "backend/main.mo",
-        "frontend/src/components/tasks/SlaStatusBadge.tsx"
+        "frontend/src/pages/tasks/CreateTaskPage.tsx",
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts"
+      ]
+    },
+    {
+      "id": "REQ-26",
+      "requirement": "Task Detail 'Fill Form' and 'View Submission' should submit per task+form and then reflect updated per-form completion, and view submission via /tasks/$taskId/submissions/$submissionId using existing FormSubmissionViewPage.",
+      "reason": "UI wiring for dialog and navigation exists, but the underlying submission data is not truly task-scoped (submissions list is all user submissions; submissionId is synthetic; fetched submission's taskId becomes 'unknown'), and there is no evidence that submitting updates the task’s per-form completion in backend (the dialog’s onSuccess only closes the dialog; no query invalidation for task is shown in the truncated submit hook).",
+      "evidence": [
+        "frontend/src/pages/tasks/TaskDetailPage.tsx",
+        "frontend/src/components/tasks/TaskFormSubmitDialog.tsx",
+        "frontend/src/hooks/forms/useFormSubmissions.ts",
+        "frontend/src/pages/tasks/FormSubmissionViewPage.tsx"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Adds blob storage mixin usage in the backend (MixinStorage / blob-storage imports).",
-      "reason": "The BuildRequest did not request integrating a blob-storage mixin/library; it only required File Upload field support and constrained the backend to remain a single Motoko actor with no additional backend services.",
+      "description": "Added new React Query hooks for Master Data (task types, priorities, statuses, departments, categories, master lists).",
+      "reason": "BuildRequest focuses on Task Definitions, creating tasks from definitions, and task-scoped submissions; master data hooks are not requested as part of REQ-20 through REQ-26.",
       "evidence": [
-        "backend/main.mo"
+        "frontend/src/hooks/masterData/useMasterData.ts"
       ]
     },
     {
-      "description": "Adds an authorization mixin/library (authorization/MixinAuthorization and authorization/access-control).",
-      "reason": "While RBAC is required, the BuildRequest did not specify adding an authorization mixin package; the diff introduces these specific modules, which may be beyond the requested scope/constraints (cannot confirm compatibility with constraints from the summary alone).",
+      "description": "Added a Task Journey React Query hook mapping audit log entries to a JourneyEvent format.",
+      "reason": "Task journey/audit log changes are not part of the requested requirements (REQ-20 to REQ-26).",
       "evidence": [
-        "backend/main.mo"
+        "frontend/src/hooks/tasks/useTaskJourney.ts"
       ]
     },
     {
-      "description": "Adds product branding/footer text and external link (\"Built with love using caffeine.ai\").",
-      "reason": "Not requested in REQ-10 (theme/layout) or any other requirement; introduces additional branding content.",
+      "description": "Introduced a backend migration that changes Task.attachedForms representation to TaskFormAttachment with completed flag.",
+      "reason": "The request is about Task Definitions and task-scoped submissions; it does not explicitly request changing the stable task model via migration. This may be necessary for REQ-21/REQ-22, but the diff summary provides no explicit linkage to requested Task Definition functionality.",
       "evidence": [
-        "frontend/src/components/layout/AppShell.tsx"
+        "backend/migration.mo",
+        "backend/main.mo"
       ]
     }
   ],
-  "confidence": 0.68,
+  "confidence": 0.82,
   "changed_files": [
-    "all_files_summary.json",
     "backend/main.mo",
-    "frontend/index.css",
-    "frontend/index.html",
-    "frontend/src/App.tsx",
-    "frontend/src/components/auth/AccessDeniedScreen.tsx",
-    "frontend/src/components/auth/LoginButton.tsx",
-    "frontend/src/components/auth/ProfileSetupDialog.tsx",
-    "frontend/src/components/auth/RequireAdmin.tsx",
-    "frontend/src/components/auth/RequireAuth.tsx",
-    "frontend/src/components/forms/DynamicFormRenderer.tsx",
-    "frontend/src/components/forms/FieldDefinitionRow.tsx",
-    "frontend/src/components/forms/FormDefinitionEditor.tsx",
-    "frontend/src/components/forms/SubmissionValueViewer.tsx",
-    "frontend/src/components/forms/fields/FileUploadField.tsx",
-    "frontend/src/components/layout/AppShell.tsx",
-    "frontend/src/components/layout/NavSection.tsx",
-    "frontend/src/components/masters/FixedMasterCrud.tsx",
-    "frontend/src/components/masters/MasterListEditor.tsx",
-    "frontend/src/components/tasks/PickupTaskButton.tsx",
-    "frontend/src/components/tasks/ReassignTaskDialog.tsx",
-    "frontend/src/components/tasks/SlaStatusBadge.tsx",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/tasks/TaskFormSubmitDialog.tsx",
     "frontend/src/components/tasks/TaskFormsPanel.tsx",
-    "frontend/src/components/tasks/TaskJourneyTimeline.tsx",
     "frontend/src/components/tasks/TaskListTable.tsx",
-    "frontend/src/hooks/forms/useFormDefinitions.ts",
     "frontend/src/hooks/forms/useFormSubmissions.ts",
-    "frontend/src/hooks/forms/useLookupOptions.ts",
-    "frontend/src/hooks/masters/useMasters.ts",
-    "frontend/src/hooks/tasks/useAssignmentActions.ts",
+    "frontend/src/hooks/masterData/useMasterData.ts",
     "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
     "frontend/src/hooks/tasks/useTaskJourney.ts",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useCurrentUser.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/index.css",
-    "frontend/src/main.tsx",
-    "frontend/src/pages/admin/FormBuilderPage.tsx",
-    "frontend/src/pages/admin/MastersPage.tsx",
     "frontend/src/pages/admin/TaskDefinitionsPage.tsx",
     "frontend/src/pages/tasks/CreateTaskPage.tsx",
-    "frontend/src/pages/tasks/DepartmentPoolPage.tsx",
     "frontend/src/pages/tasks/FormSubmissionViewPage.tsx",
-    "frontend/src/pages/tasks/MyTasksPage.tsx",
     "frontend/src/pages/tasks/TaskDetailPage.tsx",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

@@ -1,10 +1,12 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import type { LucideIcon } from 'lucide-react';
+import { isNavItemActive, type NavMatchRule } from '../../utils/navMatch';
 
 type NavItem = {
   label: string;
   path: string;
   icon: LucideIcon;
+  matchRule?: NavMatchRule;
 };
 
 type NavSectionProps = {
@@ -21,7 +23,7 @@ export default function NavSection({ title, items, currentPath, onNavigate }: Na
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = currentPath === item.path || currentPath.startsWith(item.path + '/');
+            const isActive = isNavItemActive(currentPath, item.path, item.matchRule);
             return (
               <SidebarMenuItem key={item.path}>
                 <SidebarMenuButton onClick={() => onNavigate({ to: item.path })} isActive={isActive}>

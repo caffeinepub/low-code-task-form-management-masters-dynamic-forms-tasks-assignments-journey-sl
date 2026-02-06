@@ -4,7 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, CheckCircle2, Circle } from 'lucide-react';
 
 type TaskFormsPanelProps = {
-  forms: Array<{ formId: string; formName: string; completed: boolean }>;
+  forms: Array<{ 
+    formId: string; 
+    formName: string; 
+    completed: boolean;
+    submissionId?: string;
+  }>;
   onOpenForm: (formId: string) => void;
   onViewSubmission: (formId: string) => void;
 };
@@ -36,7 +41,7 @@ export default function TaskFormsPanel({ forms, onOpenForm, onViewSubmission }: 
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {form.completed ? (
+                  {form.completed && form.submissionId ? (
                     <Button variant="outline" size="sm" onClick={() => onViewSubmission(form.formId)}>
                       View Submission
                     </Button>

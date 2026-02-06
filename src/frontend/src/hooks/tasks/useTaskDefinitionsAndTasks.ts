@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from '../useActor';
+import type { Task } from '../../backend';
+import { getErrorMessage } from '../../utils/getErrorMessage';
+
+// Re-export Task type for use in other components
+export type { Task };
 
 export type TaskDefinition = {
   id: string;
@@ -12,34 +17,8 @@ export type TaskDefinition = {
   lastUpdated: bigint;
 };
 
-export type Task = {
-  id: string;
-  definitionId: string;
-  taskType: string;
-  priority: string;
-  status: string;
-  owner: string;
-  assignment?: { type: 'department' | 'user'; value: string };
-  createdDate: bigint;
-  dueDate: bigint;
-  completionDate?: bigint;
-  attachedForms: string[];
-  formCompletionStatus: Array<{ formId: string; completed: boolean }>;
-  slaStatus?: 'onTrack' | 'atRisk' | 'breached';
-};
-
-export function useGetTaskDefinitions() {
-  const { actor, isFetching } = useActor();
-  return useQuery<TaskDefinition[]>({
-    queryKey: ['taskDefinitions'],
-    queryFn: async () => {
-      if (!actor) return [];
-      // Backend needs: getAllTaskDefinitions query method
-      return [];
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
+// Note: Backend Task type is already imported from backend.d.ts
+// We'll use it directly instead of redefining
 
 export function useGetMyTasks() {
   const { actor, isFetching } = useActor();
@@ -47,8 +26,12 @@ export function useGetMyTasks() {
     queryKey: ['myTasks'],
     queryFn: async () => {
       if (!actor) return [];
-      // Backend needs: getMyTasks query method
-      return [];
+      try {
+        return await actor.getMyTasks();
+      } catch (error) {
+        console.error('Failed to fetch my tasks:', error);
+        throw new Error(getErrorMessage(error));
+      }
     },
     enabled: !!actor && !isFetching,
   });
@@ -60,8 +43,12 @@ export function useGetDepartmentPoolTasks() {
     queryKey: ['departmentPoolTasks'],
     queryFn: async () => {
       if (!actor) return [];
-      // Backend needs: getDepartmentPoolTasks query method
-      return [];
+      try {
+        return await actor.getAssignedTasks();
+      } catch (error) {
+        console.error('Failed to fetch department pool tasks:', error);
+        throw new Error(getErrorMessage(error));
+      }
     },
     enabled: !!actor && !isFetching,
   });
@@ -73,8 +60,12 @@ export function useGetTask(taskId: string) {
     queryKey: ['task', taskId],
     queryFn: async () => {
       if (!actor) return null;
-      // Backend needs: getTask(taskId) query method
-      return null;
+      try {
+        return await actor.getTask(taskId);
+      } catch (error) {
+        console.error('Failed to fetch task:', error);
+        throw new Error(getErrorMessage(error));
+      }
     },
     enabled: !!actor && !isFetching && !!taskId,
   });
@@ -85,46 +76,42 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (task: Omit<Task, 'id' | 'createdDate' | 'formCompletionStatus'>) => {
+    mutationFn: async (task: Task) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend needs: createTask mutation
-      return;
+      try {
+        await actor.createTask(task);
+        return task.id;
+      } catch (error) {
+        console.error('Failed to create task:', error);
+        throw new Error(getErrorMessage(error));
+      }
     },
-    onSuccess: () => {
+    onSuccess: (taskId) => {
       queryClient.invalidateQueries({ queryKey: ['myTasks'] });
       queryClient.invalidateQueries({ queryKey: ['departmentPoolTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
     },
   });
 }
 
-export function useCreateTaskDefinition() {
+export function useUpdateTask() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (definition: Omit<TaskDefinition, 'id' | 'created' | 'lastUpdated'>) => {
+    mutationFn: async ({ id, task }: { id: string; task: Task }) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend needs: createTaskDefinition mutation
-      return;
+      try {
+        await actor.updateTask(id, task);
+      } catch (error) {
+        console.error('Failed to update task:', error);
+        throw new Error(getErrorMessage(error));
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taskDefinitions'] });
-    },
-  });
-}
-
-export function useUpdateTaskDefinition() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, definition }: { id: string; definition: TaskDefinition }) => {
-      if (!actor) throw new Error('Actor not available');
-      // Backend needs: updateTaskDefinition mutation
-      return;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taskDefinitions'] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['task', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['myTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['departmentPoolTasks'] });
     },
   });
 }

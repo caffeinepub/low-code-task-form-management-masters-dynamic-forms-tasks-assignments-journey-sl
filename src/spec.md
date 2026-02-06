@@ -1,18 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Build a low-code, configuration-driven task and form management app with Admin-only configuration (masters, form builder, task definitions) and user-facing task execution (assignments, submissions, journey, SLA).
+**Goal:** Add Task Definitions that require one or more attached forms, enable creating tasks from those definitions, and support per-form submissions and completion tracking inside tasks.
 
 **Planned changes:**
-- Implement Internet Identity authentication and backend-enforced role-based access control (Admin vs non-admin), with UI gating and clear “You do not have access” messaging.
-- Add Admin Master Data Management for fixed masters (Users, Roles, Departments, Statuses, Categories, Priorities) plus user-defined master lists with CRUD, deactivation, and lookup endpoints.
-- Create Admin dynamic Form Definition model with versioning and field definitions (Single Line, Multi Line, Number, Date, Date-Time, Dropdown, Multi-Select, File Upload), including validation metadata and publishable versions.
-- Implement runtime lookup-backed dropdown/multi-select fields that load options dynamically from masters and reflect master changes without republishing form versions.
-- Add reusable form linking to task definitions and store per-task submissions with references to form definition/version, submitter, and timestamps; provide read-only submission viewing.
-- Implement Task Definitions and Task Instances with metadata (Task Type, Priority, Status, Owner, Created Date, Due Date, Completion Date), multiple attached forms, and per-form completion status derived from submissions.
-- Implement assignment workflows: assign to department pool or user, department pickup, reassignment with permission checks, and task visibility rules (my tasks / my department pool / admin all).
-- Add task journey (append-only event log) covering status changes, assignment/pickup/reassignment, and form submissions; render a human-readable timeline in the UI.
-- Add SLA/TAT configuration on task definitions, SLA status computation (On track / At risk / Breached), escalation threshold detection, and escalation events recorded in the task journey; display SLA status on lists and detail pages.
-- Apply a consistent enterprise UI theme and layout separating Admin configuration areas from user task work areas using Tailwind and existing UI components.
+- Add backend TaskDefinition data model with an ordered list of attached Form Definition references (at least one required), plus admin-only create/update and query APIs to list/get task definitions.
+- Add backend APIs to create Task instances from a selected Task Definition, copying attached forms onto the task and initializing per-form completion status to incomplete.
+- Add backend task-scoped form submission APIs (submit, list by task, get by submissionId) that update per-form completion status on successful submission.
+- Replace placeholder React Query hooks for task definitions/tasks/submissions to call real backend actor methods and handle cache invalidation and English errors.
+- Build Admin UI at `/admin/task-definitions` to list/create/edit Task Definitions with multi-select Form Definitions and enforce “at least one form” validation.
+- Build Create Task UI at `/tasks/create` to select a Task Definition, create a task, and navigate to the new task detail page (with English error handling on failure).
+- Update Task Detail to support “Fill Form” (open existing DynamicFormRenderer and submit for the task) and “View Submission” (navigate to existing submission view page), reflecting per-form submitted state.
 
-**User-visible outcome:** Admins can manage masters, build/version/publish dynamic reusable forms, define tasks with attached forms and SLA rules, and view all tasks; non-admin users can see tasks assigned to them or their department pool, pick up/reassign when allowed, fill and submit assigned forms, review read-only submissions, and view task journey and SLA status.
+**User-visible outcome:** Admins can define tasks that include one or more forms and create tasks from those definitions; users can open each attached form within a task, submit it individually, see per-form completion status update, and view saved submissions.

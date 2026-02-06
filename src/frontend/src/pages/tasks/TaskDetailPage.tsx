@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
@@ -8,14 +9,22 @@ import TaskJourneyTimeline from '../../components/tasks/TaskJourneyTimeline';
 import PickupTaskButton from '../../components/tasks/PickupTaskButton';
 import ReassignTaskDialog from '../../components/tasks/ReassignTaskDialog';
 import SlaStatusBadge from '../../components/tasks/SlaStatusBadge';
+import TaskFormSubmitDialog from '../../components/tasks/TaskFormSubmitDialog';
 import { useGetTask } from '../../hooks/tasks/useTaskDefinitionsAndTasks';
 import { useGetTaskJourney } from '../../hooks/tasks/useTaskJourney';
+import { useGetTaskSubmissions } from '../../hooks/forms/useFormSubmissions';
+import { useGetFormDefinitions } from '../../hooks/forms/useFormDefinitions';
 
 export default function TaskDetailPage() {
   const { taskId } = useParams({ from: '/tasks/$taskId' });
   const navigate = useNavigate();
   const { data: task, isLoading } = useGetTask(taskId);
   const { data: journeyEvents = [] } = useGetTaskJourney(taskId);
+  const { data: submissions = [] } = useGetTaskSubmissions(taskId);
+  const { data: formDefinitions = [] } = useGetFormDefinitions();
+  
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -41,6 +50,37 @@ export default function TaskDetailPage() {
     return date.toLocaleDateString();
   };
 
+  const handleOpenForm = (formId: string) => {
+    setSelectedFormId(formId);
+    setIsSubmitDialogOpen(true);
+  };
+
+  const handleViewSubmission = (formId: string) => {
+    // Find the submission for this form
+    const submission = submissions.find((s) => s.formId === formId);
+    if (submission) {
+      navigate({ to: `/tasks/${taskId}/submissions/${submission.id}` });
+    }
+  };
+
+  const handleSubmitSuccess = () => {
+    setIsSubmitDialogOpen(false);
+    setSelectedFormId(null);
+  };
+
+  // Map attached forms to display format with completion status and names
+  const formsWithDetails = task.attachedForms.map((attachment) => {
+    const formDef = formDefinitions.find((f) => f.id === attachment.formDefinitionId);
+    const submission = submissions.find((s) => s.formId === attachment.formDefinitionId);
+    
+    return {
+      formId: attachment.formDefinitionId,
+      formName: formDef?.name || `Form ${attachment.formDefinitionId}`,
+      completed: attachment.completed,
+      submissionId: submission?.id,
+    };
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -52,7 +92,7 @@ export default function TaskDetailPage() {
           <p className="text-muted-foreground mt-2">Task ID: {task.id}</p>
         </div>
         <div className="flex gap-2">
-          {task.assignment?.type === 'department' && <PickupTaskButton taskId={task.id} />}
+          {task.assignment?.__kind__ === 'department' && <PickupTaskButton taskId={task.id} />}
           <ReassignTaskDialog taskId={task.id} />
         </div>
       </div>
@@ -82,12 +122,6 @@ export default function TaskDetailPage() {
                 <div className="text-sm text-muted-foreground">Due Date</div>
                 <div className="mt-1">{formatDate(task.dueDate)}</div>
               </div>
-              <div>
-                <div className="text-sm text-muted-foreground">SLA Status</div>
-                <div className="mt-1">
-                  <SlaStatusBadge status={task.slaStatus} />
-                </div>
-              </div>
               {task.completionDate && (
                 <div>
                   <div className="text-sm text-muted-foreground">Completed</div>
@@ -107,11 +141,15 @@ export default function TaskDetailPage() {
               <div className="space-y-2">
                 <div>
                   <div className="text-sm text-muted-foreground">Type</div>
-                  <div className="mt-1 capitalize">{task.assignment.type}</div>
+                  <div className="mt-1 capitalize">{task.assignment.__kind__}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Assigned To</div>
-                  <div className="mt-1">{task.assignment.value}</div>
+                  <div className="mt-1">
+                    {task.assignment.__kind__ === 'user' 
+                      ? task.assignment.user.toString() 
+                      : task.assignment.department}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -122,16 +160,22 @@ export default function TaskDetailPage() {
       </div>
 
       <TaskFormsPanel
-        forms={task.formCompletionStatus.map((f) => ({
-          formId: f.formId,
-          formName: `Form ${f.formId}`,
-          completed: f.completed,
-        }))}
-        onOpenForm={(formId) => console.log('Open form', formId)}
-        onViewSubmission={(formId) => console.log('View submission', formId)}
+        forms={formsWithDetails}
+        onOpenForm={handleOpenForm}
+        onViewSubmission={handleViewSubmission}
       />
 
       <TaskJourneyTimeline events={journeyEvents} />
+
+      {selectedFormId && (
+        <TaskFormSubmitDialog
+          open={isSubmitDialogOpen}
+          onOpenChange={setIsSubmitDialogOpen}
+          taskId={taskId}
+          formId={selectedFormId}
+          onSuccess={handleSubmitSuccess}
+        />
+      )}
     </div>
   );
 }

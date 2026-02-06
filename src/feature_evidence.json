@@ -2,16 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-implement-authentication-and-role-based-access-control-so-that-only-admin-users-can-create-edit-master-data-master-lists-and-form-definitions-non-admin-users-can-only-work-on-tasks-and-submit-assigned-forms-according-to-task-visibility-rules",
-      "featureTitle": "Implement authentication and role-based access control so that only Admin users can create/edit master data, master lists, and form definitions; non-admin users can only work on tasks and submit assigned forms according to task visibility rules.",
+      "featureId": "feature-wire-up-react-query-hooks-for-task-definitions-tasks-and-task-form-submissions-so-they-call-real-backend-actor-methods-instead-of-returning-placeholders",
+      "featureTitle": "Wire up React Query hooks for task definitions, tasks, and task form submissions so they call real backend actor methods instead of returning placeholders.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/auth/AccessDeniedScreen.tsx",
-        "frontend/src/components/auth/LoginButton.tsx",
-        "frontend/src/components/auth/ProfileSetupDialog.tsx",
-        "frontend/src/components/auth/RequireAdmin.tsx",
-        "frontend/src/components/auth/RequireAuth.tsx",
-        "frontend/src/hooks/useCurrentUser.ts"
+        "frontend/src/hooks/forms/useFormSubmissions.ts",
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,19 +18,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-23"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-create-master-data-management-for-fixed-masters-users-roles-departments-statuses-categories-priorities-and-user-defined-master-lists-including-crud-operations-lookup-support-and-admin-only-edit-permissions",
-      "featureTitle": "Create Master Data Management for fixed masters (Users, Roles, Departments, Statuses, Categories, Priorities) and user-defined master lists, including CRUD operations, lookup support, and Admin-only edit permissions.",
+      "featureId": "feature-replace-the-placeholder-admin-task-definitions-page-with-a-working-ui-to-list-create-and-edit-task-definitions-including-selecting-one-or-more-existing-form-definitions-multi-select-and-enforcing-the-at-least-one-form-rule-in-the-ui",
+      "featureTitle": "Replace the placeholder Admin Task Definitions page with a working UI to list, create, and edit Task Definitions, including selecting one or more existing Form Definitions (multi-select) and enforcing the “at least one form” rule in the UI.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/masters/FixedMasterCrud.tsx",
-        "frontend/src/components/masters/MasterListEditor.tsx",
-        "frontend/src/hooks/masters/useMasters.ts",
-        "frontend/src/pages/admin/MastersPage.tsx"
+        "frontend/src/pages/admin/TaskDefinitionsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -47,19 +38,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-24"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-a-dynamic-form-definition-model-with-versioning-and-field-definitions-so-admin-users-can-build-reusable-forms-including-validation-metadata-and-support-for-single-line-multi-line-number-date-date-time-dropdown-multi-select-and-file-upload-fields",
-      "featureTitle": "Implement a dynamic Form Definition model with versioning and field definitions so Admin users can build reusable forms, including validation metadata and support for: Single Line, Multi Line, Number, Date, Date-Time, Dropdown, Multi-Select, and File Upload fields.",
+      "featureId": "feature-replace-the-placeholder-create-task-page-with-a-working-ui-that-allows-creating-a-task-from-a-selected-task-definition-and-required-task-metadata-then-navigates-to-the-new-task-s-detail-page",
+      "featureTitle": "Replace the placeholder Create Task page with a working UI that allows creating a Task from a selected Task Definition and required task metadata, then navigates to the new Task’s detail page.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/forms/FieldDefinitionRow.tsx",
-        "frontend/src/components/forms/FormDefinitionEditor.tsx",
-        "frontend/src/hooks/forms/useFormDefinitions.ts",
-        "frontend/src/pages/admin/FormBuilderPage.tsx"
+        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
+        "frontend/src/pages/tasks/CreateTaskPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -71,38 +59,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-25"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-enable-custom-form-fields-to-reference-master-data-via-lookups-with-dropdown-and-multi-select-options-loaded-dynamically-from-masters-at-runtime-and-ensure-master-changes-automatically-reflect-in-all-dependent-form-renders",
-      "featureTitle": "Enable custom form fields to reference master data via lookups, with dropdown and multi-select options loaded dynamically from masters at runtime, and ensure master changes automatically reflect in all dependent form renders.",
+      "featureId": "feature-implement-the-task-detail-fill-form-and-view-submission-actions-so-users-can-open-an-attached-form-submit-it-for-the-task-and-then-view-the-saved-submission-from-the-task-s-forms-panel",
+      "featureTitle": "Implement the Task Detail “fill form” and “view submission” actions so users can open an attached form, submit it for the task, and then view the saved submission from the task’s forms panel.",
       "files": [
-        "frontend/src/components/forms/DynamicFormRenderer.tsx",
-        "frontend/src/components/forms/SubmissionValueViewer.tsx",
-        "frontend/src/components/forms/fields/FileUploadField.tsx",
-        "frontend/src/hooks/forms/useLookupOptions.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-store-custom-forms-as-reusable-entities-that-can-be-linked-to-multiple-task-definitions-and-implement-submission-tracking-per-form-version-including-a-read-only-view-of-prior-submissions",
-      "featureTitle": "Store custom forms as reusable entities that can be linked to multiple task definitions, and implement submission tracking per form version including a read-only view of prior submissions.",
-      "files": [
-        "frontend/src/App.tsx",
+        "frontend/src/components/tasks/TaskFormSubmitDialog.tsx",
         "frontend/src/components/tasks/TaskFormsPanel.tsx",
         "frontend/src/hooks/forms/useFormSubmissions.ts",
         "frontend/src/pages/tasks/FormSubmissionViewPage.tsx",
@@ -118,124 +83,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-task-definitions-and-task-instances-that-support-attaching-multiple-custom-forms-and-tracking-per-form-completion-status-including-task-metadata-task-type-priority-status-owner-created-date-due-date-and-completion-date",
-      "featureTitle": "Implement Task Definitions and Task Instances that support attaching multiple custom forms and tracking per-form completion status, including task metadata: Task Type, Priority, Status, Owner, Created Date, Due Date, and Completion Date.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/tasks/TaskListTable.tsx",
-        "frontend/src/hooks/tasks/useTaskDefinitionsAndTasks.ts",
-        "frontend/src/pages/admin/TaskDefinitionsPage.tsx",
-        "frontend/src/pages/tasks/CreateTaskPage.tsx",
-        "frontend/src/pages/tasks/MyTasksPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-assignment-and-reassignment-workflows-tasks-can-be-assigned-to-a-department-pool-or-a-specific-user-department-assigned-tasks-can-be-picked-up-by-a-department-member-tasks-can-be-reassigned-to-another-department-user-while-enforcing-visibility-rules",
-      "featureTitle": "Implement assignment and reassignment workflows: tasks can be assigned to a department pool or a specific user; department-assigned tasks can be picked up by a department member; tasks can be reassigned to another department/user while enforcing visibility rules.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/tasks/PickupTaskButton.tsx",
-        "frontend/src/components/tasks/ReassignTaskDialog.tsx",
-        "frontend/src/hooks/tasks/useAssignmentActions.ts",
-        "frontend/src/pages/tasks/DepartmentPoolPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-provide-task-journey-tracking-audit-history-showing-the-lifecycle-of-a-task-across-status-changes-assignments-pickups-reassignments-and-form-submissions-viewable-in-the-ui",
-      "featureTitle": "Provide task journey tracking (audit history) showing the lifecycle of a task across status changes, assignments, pickups, reassignments, and form submissions, viewable in the UI.",
-      "files": [
-        "frontend/src/components/tasks/TaskJourneyTimeline.tsx",
-        "frontend/src/hooks/tasks/useTaskJourney.ts",
-        "frontend/src/pages/tasks/TaskDetailPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-8"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-escalation-rules-and-tat-sla-tracking-for-tasks-including-calculating-elapsed-time-vs-due-time-a-task-sla-status-on-track-at-risk-breached-and-recording-escalation-events-when-thresholds-are-exceeded",
-      "featureTitle": "Implement escalation rules and TAT/SLA tracking for tasks, including calculating elapsed time vs due time, a task SLA status (On track / At risk / Breached), and recording escalation events when thresholds are exceeded.",
-      "files": [
-        "frontend/src/components/tasks/SlaStatusBadge.tsx",
-        "frontend/src/components/tasks/TaskListTable.tsx",
-        "frontend/src/pages/admin/TaskDefinitionsPage.tsx",
-        "frontend/src/pages/tasks/TaskDetailPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-9"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-create-a-coherent-consistent-ui-theme-for-an-enterprise-admin-workflow-tool-colors-typography-spacing-and-component-styling-and-apply-it-across-admin-masters-forms-task-definitions-and-user-tasks-forms-journey-areas-using-tailwind-existing-ui-components",
-      "featureTitle": "Create a coherent, consistent UI theme for an enterprise admin/workflow tool (colors, typography, spacing, and component styling) and apply it across Admin (masters/forms/task definitions) and User (tasks/forms/journey) areas using Tailwind + existing UI components.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/layout/AppShell.tsx",
-        "frontend/src/components/layout/NavSection.tsx",
-        "frontend/src/index.css"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-10"
+        "REQ-26"
       ],
       "confidence": "high"
     }

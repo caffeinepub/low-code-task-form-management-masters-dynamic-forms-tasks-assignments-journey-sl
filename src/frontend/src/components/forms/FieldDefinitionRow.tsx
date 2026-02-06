@@ -5,7 +5,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trash2 } from 'lucide-react';
-import type { FormField, FieldType } from '../../backend';
+import { FieldType } from '../../backend';
+import { fieldTypeToString } from '../../utils/formDefinitionEncoding';
+import type { FormField } from '../../backend';
 
 type FieldDefinitionRowProps = {
   field: FormField;
@@ -13,26 +15,44 @@ type FieldDefinitionRowProps = {
   onRemove: () => void;
 };
 
-const fieldTypeOptions: Array<{ value: string; label: string }> = [
-  { value: 'singleLine', label: 'Single Line Text' },
-  { value: 'multiLine', label: 'Multi Line Text' },
-  { value: 'number', label: 'Number' },
-  { value: 'date', label: 'Date' },
-  { value: 'dateTime', label: 'Date & Time' },
-  { value: 'dropdown', label: 'Dropdown' },
-  { value: 'multiSelect', label: 'Multi-Select' },
-  { value: 'fileUpload', label: 'File Upload' },
+const fieldTypeOptions: Array<{ value: FieldType; label: string }> = [
+  { value: FieldType.singleLine, label: 'Single Line Text' },
+  { value: FieldType.multiLine, label: 'Multi Line Text' },
+  { value: FieldType.number_, label: 'Number' },
+  { value: FieldType.date, label: 'Date' },
+  { value: FieldType.dateTime, label: 'Date & Time' },
+  { value: FieldType.dropdown, label: 'Dropdown' },
+  { value: FieldType.multiSelect, label: 'Multi-Select' },
+  { value: FieldType.fileUpload, label: 'File Upload' },
 ];
 
 export default function FieldDefinitionRow({ field, onUpdate, onRemove }: FieldDefinitionRowProps) {
-  const fieldTypeValue = typeof field.fieldType === 'string' ? field.fieldType : Object.keys(field.fieldType)[0];
+  const fieldTypeValue = fieldTypeToString(field.fieldType);
 
   const handleFieldTypeChange = (value: string) => {
+    // Map the display value back to the enum
+    const enumValue = value === 'number' ? FieldType.number_ : value as FieldType;
     onUpdate({
       ...field,
-      fieldType: { __kind__: value } as any,
+      fieldType: enumValue,
     });
   };
+
+  const handleRequiredChange = (checked: boolean) => {
+    onUpdate({
+      ...field,
+      validations: checked ? { required: true } : undefined,
+    });
+  };
+
+  const handleMasterListRefChange = (value: string) => {
+    onUpdate({
+      ...field,
+      masterListRef: value.trim() || undefined,
+    });
+  };
+
+  const showLookupSource = fieldTypeValue === 'dropdown' || fieldTypeValue === 'multiSelect';
 
   return (
     <Card>
@@ -55,7 +75,7 @@ export default function FieldDefinitionRow({ field, onUpdate, onRemove }: FieldD
                 </SelectTrigger>
                 <SelectContent>
                   {fieldTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={fieldTypeToString(option.value)}>
                       {option.label}
                     </SelectItem>
                   ))}
@@ -71,24 +91,19 @@ export default function FieldDefinitionRow({ field, onUpdate, onRemove }: FieldD
             <Checkbox
               id={`required-${field.id}`}
               checked={field.validations?.required || false}
-              onCheckedChange={(checked) =>
-                onUpdate({
-                  ...field,
-                  validations: { ...field.validations, required: checked as boolean },
-                })
-              }
+              onCheckedChange={handleRequiredChange}
             />
             <Label htmlFor={`required-${field.id}`} className="text-sm font-normal">
               Required field
             </Label>
           </div>
 
-          {(fieldTypeValue === 'dropdown' || fieldTypeValue === 'multiSelect') && (
+          {showLookupSource && (
             <div className="space-y-2">
               <Label>Lookup Source</Label>
               <Input
                 value={field.masterListRef || ''}
-                onChange={(e) => onUpdate({ ...field, masterListRef: e.target.value })}
+                onChange={(e) => handleMasterListRefChange(e.target.value)}
                 placeholder="Enter master list ID or type (e.g., 'departments', 'categories')"
               />
               <p className="text-xs text-muted-foreground">
